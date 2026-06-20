@@ -1,0 +1,3654 @@
+# DocCode — เรียนรู้ควบคู่ FPS Game Template (Phase 0–12)
+
+อ้างอิงหลัก: https://learn.unity.com/
+แนะนำเริ่ม: "Get Started with Unity" + "Set up the Unity Editor" + Game Development Pathway
+
+วิธีใช้ไฟล์นี้:
+1. เรียนหัวข้อ Unity Learn ในแต่ละ Phase
+2. รัน FPSGame → Setup Phase X ใน Unity
+3. เปิดโค้ดใน template/Scripts/ คู่กับตัวอย่างด้านล่าง
+4. ทดสอบตาม template/Plan/UnitySetup.md
+
+================================================================================
+PHASE 0 — ต้องรู้: Unity กับ Vault คืออะไร
+================================================================================
+
+เป้าหมาย Phase 0
+  เมื่อจบ Phase 0 คุณต้องอธิบายได้ว่า:
+  - Unity project กับ vault (template) ต่างกันอย่างไร
+  - GameObject / Component / Scene / Prefab คืออะไร
+  - ทำไมต้อง copy Scripts แล้วกดเมนู FPSGame → Setup Phase 0
+  - เปิด Unity Editor แล้วรู้ว่า Hierarchy, Inspector, Project, Scene ใช้ทำอะไร
+
+--------------------------------------------------------------------------------
+1. สองโลกที่ต้องแยกให้ออก — Vault vs Unity Project
+--------------------------------------------------------------------------------
+
+Vault (MyGameProject_Vault_base/template/)
+  ที่เก็บ "ต้นฉบับ" ที่ Git / Obsidian / Cursor ดูแล
+  - template/Scripts/     = โค้ด C# (ยังไม่ compile จนกว่าจะเอาเข้า Unity)
+  - template/Plan/        = แผน + UnitySetup (ขั้นตอนละเอียด)
+  - template/LearnCode/   = เอกสารเรียน (ไฟล์นี้)
+
+Unity Project (เช่น FPSGame_Unity/)
+  โปรเจกต์ที่ Unity Editor เปิด — มี Assets/, ProjectSettings/, Library/
+  - Assets/FPSGame/Scripts/  ← copy มาจาก vault
+  - Assets/FPSGame/Scenes/   ← Phase 0 สร้าง PrototypeGameplay.unity
+  - Assets/FPSGame/Prefabs/  ← Phase 1+ สร้าง Player.prefab ฯลฯ
+
+ทำไมแยกกัน?
+  Unity ต้องการโครงสร้างเฉพาะ + compile + สร้าง .meta ให้ทุก asset
+  Vault เก็บแค่ "source" ที่พกพาได้ — clone จาก GitHub แล้ว copy เข้า Unity ใหม่ได้
+
+Flow มาตรฐาน (ทำครั้งแรก):
+  1) Unity Hub → New project → 3D (Built-in หรือ URP)
+  2) Copy  template/Scripts/  →  Assets/FPSGame/Scripts/  (รวม Editor/ และ .asmdef)
+  3) รอ Unity compile (ดู Console ไม่มี error สีแดง)
+  4) เมนู  FPSGame → Setup Phase 0 (Project Bootstrap)
+  5) เมนู  FPSGame → Open PrototypeGameplay Scene
+  6) กด Play — ยังไม่มี Player จนกว่าจะรัน Phase 1 (ปกติ)
+
+  รายละเอียดเพิ่ม: template/UnityBootstrap/README.md
+  ขั้นตอน Inspector: template/Plan/UnitySetup.md → Phase 0
+
+--------------------------------------------------------------------------------
+2. Unity Editor — หน้าต่างที่ต้องคุ้น (ไม่ต้องจำทุกเมนู)
+--------------------------------------------------------------------------------
+
+Scene view
+  มองฉาก 3D — ลากวาง object, ดูแสง, ทดสอบ Play mode
+
+Game view
+  ภาพที่ผู้เล่นจะเห็น (จากกล้อง Main Camera)
+
+Hierarchy
+  รายชื่อ GameObject ทั้งหมดในฉากปัจจุบัน
+  ตัวอย่างหลัง Phase 0:
+    PrototypeGameplay
+    ├── Directional Light
+    ├── Ground
+    ├── PlayerSpawn        ← จุดเกิด (empty object)
+    ├── EventSystem
+    └── HUD_Canvas
+
+Inspector
+  แสดง Component ของ object ที่เลือก — แก้ค่า, ลาก reference
+  ตัวอย่าง: เลือก Ground → เห็น Transform, Mesh Collider, Layer = Ground
+
+Project
+  ไฟล์ทั้งหมดใต้ Assets/ — script, scene, prefab, .asset
+  โครงหลัง Phase 0:
+    Assets/FPSGame/
+      Scripts/   Data/   Prefabs/   Scenes/   UI/   Animation/
+
+Console
+  ข้อความ error (แดง), warning (เหลือง), Debug.Log (ขาว)
+  compile ไม่ผ่าน = แก้ก่อนรัน Setup Phase ถัดไป
+
+--------------------------------------------------------------------------------
+3. คำศัพท์หลัก — ต้องเข้าใจ ไม่ใช่แค่ท่อง
+--------------------------------------------------------------------------------
+
+GameObject
+  "กล่อง" ในฉาก — ทุกอย่างใน Unity เริ่มจาก GameObject
+  ตัวมันไม่ทำอะไรเอง จนกว่าจะติด Component
+
+Component
+  ความสามารถที่ติดบน GameObject
+  | Component          | ทำอะไร                          |
+  |--------------------|----------------------------------|
+  | Transform          | ตำแหน่ง / หมุน / ขนาด           |
+  | Camera             | มองฉาก                           |
+  | CharacterController| เคลื่อนที่แบบ FPS (Phase 2)      |
+  | CharacterBase (cs) | HP, damage — สคริปต์เราเขียน     |
+  | Mesh Collider      | ชนพื้น / raycast                 |
+
+  สคริปต์ C# ของเราก็เป็น Component หนึ่ง — แปะบน GameObject แล้ว Unity เรียกให้
+
+Scene
+  ไฟล์ .unity หนึ่งฉาก — เก็บว่ามี object อะไรอยู่ตรงไหน
+  template ใช้หลาย scene หลัง Phase 10: Intro, ProfileSelection, MainMenu, PrototypeGameplay
+
+Prefab
+  แม่แบบ GameObject — แก้ prefab หนึ่งครั้ง instance ทุกตัวใน scene อัปเดตตาม
+  Phase 1 สร้าง Player.prefab — Phase 8 spawn Enemy prefab
+
+Tag
+  ป้ายชื่อ string — หา object ด้วย code
+  Phase 0 สร้าง: Player, Enemy
+  ตัวอย่าง:
+    var player = GameObject.FindGameObjectWithTag("Player");
+
+Layer
+  ชั้น 0–31 — ใช้กรอง raycast / collision (ยิงโดนอะไร, ชนอะไร)
+  Phase 0 สร้าง: Ground, Player, Enemy, Hitbox
+  ตัวอย่าง:
+  [SerializeField] private LayerMask hitMask;   // เลือก layer ใน Inspector
+
+--------------------------------------------------------------------------------
+4. C# ใน Unity — สิ่งที่ Phase 0 ต้องรู้ก่อน Phase 1
+--------------------------------------------------------------------------------
+
+MonoBehaviour
+  คลาสที่ Unity "เรียกให้" ตาม lifecycle — สคริปต์ gameplay เกือบทั้งหมดสืบจากนี้
+
+  public class HelloFPS : MonoBehaviour
+  {
+      void Awake()  { }   // ก่อน Start — ตั้งค่า reference ระหว่าง component
+      void Start()  { Debug.Log("Phase 0 OK"); }  // ครั้งแรกเมื่อ object เปิด
+      void Update() { }   // ทุก frame — input, logic ต่อเนื่อง
+  }
+
+  ลำนิยม: Awake → Start → Update (ทุก frame) → OnDestroy (ตอนถูกลบ)
+
+SerializeField — ลากค่าใน Inspector ได้ แม้ field เป็น private
+  [SerializeField] private float walkSpeed = 5f;
+  // ใน Editor: เลือก object → Inspector → พิมพ์หรือลากค่า walkSpeed
+
+  ทำไมไม่ public ทั้งหมด?
+  Encapsulation — โค้ดภายนอกไม่ควรแก้ค่าโดยตรง; เปิดทางผ่าน method/property
+
+Assembly Definition (.asmdef)
+  แยกโค้ดเป็น assembly — compile เร็วขึ้น, แยก Runtime กับ Editor
+  template มี:
+    FPSGame.Runtime.asmdef   → gameplay (เข้า build เกม)
+    FPSGame.Editor.asmdef    → เมนู FPSGame → Setup Phase X (Editor เท่านั้น)
+
+  ถ้า copy Scripts แล้วไม่มี .asmdef = Unity รวมกับ Assembly-CSharp ก็ยังใช้ได้
+  แต่ template ออกแบบให้มี .asmdef — copy ทั้งโฟลเดอร์ Scripts/
+
+Debug.Log
+  พิมพ์ข้อความใน Console — ใช้ตรวจว่า code ทำงานถึงจุดไหน
+  Debug.Log("[FPSGame] Phase 0 setup complete.");
+
+--------------------------------------------------------------------------------
+5. Phase 0 ใน template ทำอะไรให้ (FPSGameProjectSetup)
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 0 (Project Bootstrap)
+
+สร้างโฟลเดอร์ใต้ Assets/FPSGame/:
+  Scripts/, Data/, Prefabs/, Scenes/, UI/, Animation/ ...
+
+ตั้ง Project Settings:
+  Tags:   Player, Enemy
+  Layers: Ground, Player, Enemy, Hitbox
+
+สร้าง scene (ถ้ายังไม่มี):
+  Assets/FPSGame/Scenes/PrototypeGameplay.unity
+  มี: Ground (Layer Ground), Light, PlayerSpawn, EventSystem, HUD_Canvas
+
+Phase 0 ยังไม่สร้าง Player, ปืน, HUD logic — มีแค่ "โครงร่างฉาก"
+
+เมนูอื่นที่ใช้บ่อย:
+  FPSGame → Open PrototypeGameplay Scene
+
+--------------------------------------------------------------------------------
+6. เรียนเพิ่มจาก Unity Learn (ก่อน/คู่ Phase 0)
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำเรียงนี้:
+  1) Explore the Unity Hub          (~10 นาที)
+  2) Set up the Unity Editor        (~15 นาที)
+  3) Get Started with Unity         (สร้าง scene 3D แรก + ทัวร์ Editor)
+  4) Unity Game Development Pathway (foundation ระยะยาว — ทำทีละส่วน)
+
+Unity Learn สอน "Unity ทั่วไป"
+DocCode + UnitySetup สอน "โปรเจกต์ FPS template นี้"
+
+หมายเหตุ Input:
+  UnityBootstrap อาจพูดถึง Input System package
+  แต่ template นี้ใช้ Legacy Input Manager (Input.GetAxis, GetKey)
+  ดู UnitySetup.md Phase 2 — ไม่ต้องเปิด Input System ถ้าทำตาม template
+
+Packages แนะนำ (ดู template/UnityBootstrap/manifest.json.example):
+  com.unity.ugui — UI Canvas (Phase 4+)
+  NavMesh / AI module — Phase 7
+
+--------------------------------------------------------------------------------
+7. ทดสอบว่า Phase 0 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] Copy Scripts แล้ว Console ไม่มี compile error
+[ ] เมนู FPSGame มี "Setup Phase 0" และ "Open PrototypeGameplay Scene"
+[ ] Project Settings → Tags มี Player, Enemy
+[ ] Project Settings → Layers มี Ground, Player, Enemy, Hitbox
+[ ] เปิด PrototypeGameplay — เห็น Ground, PlayerSpawn, HUD_Canvas
+[ ] กด Play — ไม่ error (ยังไม่มี gameplay ก็ OK)
+
+--------------------------------------------------------------------------------
+8. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด AI = ผ่าน Phase 0)
+--------------------------------------------------------------------------------
+
+1) Vault กับ Unity project เก็บอะไรต่างกัน? ทำไมต้อง copy Scripts?
+2) GameObject กับ Component ต่างกันอย่างไร — ยกตัวอย่าง Player ใน Phase 1
+3) Scene กับ Prefab ต่างกันอย่างไร?
+4) Tag กับ Layer ใช้คนละเรื่อง — อธิบายสั้นๆ
+5) Awake กับ Start ต่างกันเมื่อไหร?
+6) [SerializeField] ทำไม Inspector เห็น field ที่เป็น private?
+7) หลัง Phase 0 ยังเล่น FPS ไม่ได้ — ขั้นถัดไปคืออะไร? (Phase 1)
+
+--------------------------------------------------------------------------------
+9. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 1 ใน DocCode ด้านล่าง (CharacterBase, ScriptableObject, HP, events)
+→ template/Plan/UnitySetup.md Phase 1
+→ รัน FPSGame → Setup Phase 1 (Character + Player Prefab)
+
+================================================================================
+PHASE 1 — ต้องรู้: ตัวละคร, HP, ScriptableObject, Event, Composition
+================================================================================
+
+เป้าหมาย Phase 1
+  เมื่อจบ Phase 1 คุณต้องอธิบายได้ว่า:
+  - ScriptableObject เก็บอะไร ทำไมไม่ hardcode HP ในโค้ด
+  - CharacterBase ทำหน้าที่อะไร — Player กับ Enemy ใช้ร่วมกันอย่างไร
+  - Composition ต่างจาก "Player สืบทอด CharacterBase" อย่างไร (ใน template นี้)
+  - TakeDamage → event → (Phase 4 HUD) ไหลข้อมูลอย่างไร
+  - ลาก Hero_Default.asset เข้า Inspector field ไหน
+  - ทดสอบ K / H / Y ใน Play mode แล้วเห็นอะไร
+
+Prerequisites: Phase 0 ผ่านแล้ว (Scripts compile, PrototypeGameplay มี)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 1 แก้ — ตัวละครต้องมี "ศูนย์กลาง HP"
+--------------------------------------------------------------------------------
+
+เกม FPS มีหลาย "unit": ผู้เล่น, ศัตรู AI, dummy ทดสอบ
+ทุกตัวต้อง:
+  - มี HP สูงสุด / HP ปัจจุบัน
+  - รับ damage, heal, ตาย, ฟื้น
+  - บอก UI ว่า HP เปลี่ยน (Phase 4)
+
+ถ้าเขียน HP ซ้ำใน Player.cs และ Enemy.cs = แก้ bug สองที่, balance ยาก
+
+template แก้ด้วย:
+  CharacterStats (SO)     = ข้อมูล balance ต่อตัวละคร (maxHealth, walkSpeed, faction)
+  CharacterBase (Script)  = logic HP ร่วม (TakeDamage, Heal, Die, events)
+  PlayerController        = input ผู้เล่น (Phase 2 — แยก component)
+  AIController            = FSM ศัตรู (Phase 7 — แยก component)
+
+Player ไม่ได้ "สืบทอด" CharacterBase แบบ class Player : CharacterBase
+แต่ใช้ composition — หลาย component บน GameObject เดียว (ดูข้อ 4)
+
+--------------------------------------------------------------------------------
+2. ScriptableObject (SO) — ข้อมูลที่อยู่ใน Project ไม่ใช่ในฉาก
+--------------------------------------------------------------------------------
+
+MonoBehaviour  = ติดบน GameObject ในฉาก (Player ใน scene)
+ScriptableObject = ไฟล์ .asset ใน Project window — ไม่มีตำแหน่งในโลก 3D
+
+ทำไมใช้ SO สำหรับ stats?
+  - นัก design แก้ maxHealth ใน Inspector โดยไม่แตะโค้ด
+  - ฮีโร่หลายตัว = หลาย .asset (Hero_Default, Hero_Tank, ...)
+  - Save/loadout อ้าง characterId string แล้ว lookup SO (Phase 9)
+
+CharacterStats ใน template:
+
+  [CreateAssetMenu(fileName = "CharacterStats", menuName = "FPSGame/Character Stats")]
+  public class CharacterStats : ScriptableObject
+  {
+      public string characterId;      // "hero_default" — ใช้ใน JSON save
+      public float maxHealth = 100f;
+      public float walkSpeed = 5f;
+      public float sprintSpeed = 8f;
+      public float jumpHeight = 1.5f;
+      public int jumpLimit = 1;
+      public Faction faction = Faction.Friendly;   // Friendly | Enemy
+  }
+
+Phase 1 สร้างไฟล์:
+  Assets/FPSGame/Data/Characters/Hero_Default.asset
+  characterId = hero_default, maxHealth = 100, faction = Friendly
+
+สร้างมือ (ถ้าไม่ใช้เมนู):
+  Project → คลิกขวา → Create → FPSGame → Character Stats
+
+--------------------------------------------------------------------------------
+3. CharacterBase — logic HP ที่ Player และ AI ใช้ร่วมกัน
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/Core/CharacterBase.cs
+
+อ่าน stats จาก SO ที่ลากใน Inspector:
+
+  [SerializeField] private CharacterStats stats;
+
+  public float MaxHealth => stats != null ? stats.maxHealth : 0f;
+  public float CurrentHealth => currentHealth;
+  public bool IsAlive => !isDead;
+  public Faction Faction => stats != null ? stats.faction : Faction.Friendly;
+
+Runtime HP เก็บใน private field (ไม่แก้ SO ตอนเล่น):
+
+  private float currentHealth;        // HP จริง (Primary bar — Phase 4)
+  private float displayDelayHealth;   // HP แถบ delay ค่อยๆ ตาม (visual)
+
+Awake — ตั้ง HP เริ่มจาก stats:
+
+  void Awake()
+  {
+      if (stats == null) { Debug.LogError("CharacterStats not assigned"); return; }
+      ResetHealthState();   // currentHealth = maxHealth
+  }
+
+TakeDamage — ลด HP, แจ้ง event, ตายถ้า 0:
+
+  public virtual void TakeDamage(float amount)
+  {
+      if (!IsAlive || amount <= 0f) return;
+      float previous = currentHealth;
+      currentHealth = Mathf.Max(0f, currentHealth - amount);
+      OnHealthChanged?.Invoke(previous, currentHealth);
+      if (currentHealth <= 0f) Die();
+  }
+
+Heal / Revive / Die — ชุด API ที่ UI และ gameplay เรียกผ่าน public method
+
+ApplyStats — เปลี่ยนฮีโร่ runtime (loadout / save Phase 9):
+
+  public void ApplyStats(CharacterStats newStats)
+  {
+      stats = newStats;
+      ResetHealthState();
+  }
+
+virtual บน TakeDamage, Heal, Die
+  คลาสลูก (ถ้ามีในอนาคต) override ได้ — ตามหลัก OOP ใน Plantext
+
+Phase 6+: CharacterBase implements IDamageable — อาวุธเรียก TakeDamage ผ่าน interface
+
+--------------------------------------------------------------------------------
+4. Composition — ทำไมไม่ใช้ class Player : CharacterBase
+--------------------------------------------------------------------------------
+
+Plantext เก่าอธิบายแบบ TF2: UnitBase → PlayerUnit / EnemyUnit (inheritance)
+
+template จริงใช้ composition (architecture lock):
+
+  GameObject "Player"  (Tag: Player, Layer: Player)
+  ├── CharacterBase           ← HP, damage, faction
+  ├── CharacterController     ← เคลื่อนที่ (Phase 2)
+  ├── PlayerController        ← input WASD (Phase 2)
+  ├── CharacterDamageTester   ← K/H/Y ทดสอบ (prototype)
+  ├── Camera                  ← มุมมอง FPS
+  └── WeaponMount             ← WeaponHandler (Phase 3)
+
+เหตุผล:
+  - Player รับ input จากคนดเล่น — AI รับคำสั่งจาก FSM
+  - logic HP เหมือนกัน → อยู่ CharacterBase
+  - logic ควบคุมต่างกัน → component คนละตัว (PlayerController vs AIController)
+  - ไม่ต้องสร้าง inheritance tree ลึก — ขยายด้วย component ใหม่ได้
+
+PlayerController (Phase 2) จะ GetComponent<CharacterBase>() อ่าน HP / IsAlive
+ไม่ copy logic HP ซ้ำใน PlayerController
+
+--------------------------------------------------------------------------------
+5. C# Event — ส่งสัญญาณโดยไม่รู้ว่าใครฟัง (Loose Coupling)
+--------------------------------------------------------------------------------
+
+CharacterBase ประกาศ event:
+
+  public event Action<float, float> OnHealthChanged;   // (previous, current)
+  public event Action<float> OnDelayHealthChanged;
+  public event Action<float> OnHealed;
+  public event Action OnDied;
+  public event Action OnRevived;
+
+เมื่อ HP เปลี่ยน:
+
+  OnHealthChanged?.Invoke(previous, currentHealth);
+  // ?. = เรียกเฉพาะเมื่อมีคน subscribe — ไม่ error ถ้ายังไม่มี UI
+
+Phase 4 HUD จะ subscribe:
+
+  void OnEnable()  { character.OnHealthChanged += UpdateHealthBar; }
+  void OnDisable() { character.OnHealthChanged -= UpdateHealthBar; }
+
+หลักสำคัญ:
+  CharacterBase ไม่รู้จัก HUD class
+  HUD ไม่ควรเรียก TakeDamage เพื่อ "ทดสอบ bar"
+  → แยกชั้นชัด: gameplay เปลี่ยน state → event → UI แสดงผล
+
+--------------------------------------------------------------------------------
+6. Dual HP bar (logic ใน Phase 1, UI ใน Phase 4)
+--------------------------------------------------------------------------------
+
+Primary HP (currentHealth)
+  ลดทันทีเมื่อ TakeDamage — ค่าจริงของ gameplay
+
+Delay HP (displayDelayHealth)
+  ใน Update: ค่อยๆ MoveTowards ไปหา currentHealth
+  OnDelayHealthChanged แจ้ง UI แถบหลัง
+
+  private void TickDelayHealthBar()
+  {
+      displayDelayHealth = Mathf.MoveTowards(
+          displayDelayHealth, currentHealth,
+          delayBarCatchUpPerSecond * Time.deltaTime);
+  }
+
+Phase 1: ดูใน Inspector ตอนกด K — CurrentHealth ลดทันที, DisplayDelayHealth ตามทีหลัง
+Phase 4: DualLayerHealthBarUI แสดงสองแถบ
+
+--------------------------------------------------------------------------------
+7. Player Prefab — โครงสร้างหลัง Setup Phase 1
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 1 (Character + Player Prefab)
+
+สร้าง:
+  Hero_Default.asset
+  Player.prefab
+  วาง instance ใน PrototypeGameplay ที่ PlayerSpawn
+
+Inspector wiring สำคัญ (ต้องลากเองถ้าทำมือ):
+
+  | GameObject   | Component            | Field    | มอบหมาย              |
+  |--------------|----------------------|----------|------------------------|
+  | Player       | CharacterBase        | stats    | Hero_Default.asset     |
+  | Player       | CharacterDamageTester| character| (self หรือ auto Awake)|
+  | Player/Camera| Camera               | Tag      | MainCamera             |
+
+Hierarchy:
+  Player
+  ├── Camera          (local Y ≈ 1.6)
+  └── WeaponMount     (local 0, 1.4, 0.4) — Phase 3 ใส่ WeaponHandler
+
+Faction อยู่ที่ CharacterStats.faction — ไม่ใช่ field แยกบน CharacterBase
+
+IsHostileTo — เช็คทีม (ใช้ Phase 3+ ยิงไม่โดนเพื่อน):
+
+  public bool IsHostileTo(CharacterBase other)
+  {
+      return Faction != other.Faction;
+  }
+
+--------------------------------------------------------------------------------
+8. CharacterDamageTester — ทดสอบใน Play mode (prototype เท่านั้น)
+--------------------------------------------------------------------------------
+
+ไฟล์: Core/CharacterDamageTester.cs
+ติดบน Player — ห้ามใส่ใน build จริง (ลบ/disable ก่อนปล่อยเกม)
+
+  if (Input.GetKeyDown(KeyCode.K)) character.TakeDamage(10f);
+  if (Input.GetKeyDown(KeyCode.H)) character.Heal(10f);
+  if (Input.GetKeyDown(KeyCode.Y) && !character.IsAlive) character.Revive();
+
+K = damage 10 | H = heal 10 | Y = revive เมื่อตาย
+
+ดูผล:
+  Inspector → เลือก Player → CharacterBase → Current Health ลด/เพิ่ม
+  Console ไม่ error, IsAlive เปลี่ยนเมื่อ HP = 0
+
+--------------------------------------------------------------------------------
+9. Data Flow Phase 1 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Project]
+  Hero_Default.asset (SO)
+       │ stats field (Inspector drag)
+       ▼
+  [Scene] Player.prefab instance
+       CharacterBase.Awake() → currentHealth = maxHealth
+       │
+       │  K key (CharacterDamageTester)
+       ▼
+  CharacterBase.TakeDamage(10)
+       │ currentHealth -= 10
+       │ OnHealthChanged.Invoke(prev, cur)
+       │ TickDelayHealthBar → OnDelayHealthChanged
+       ▼
+  (Phase 4) HUD ฟัง event → อัปเดต slider
+
+  (Phase 3+) Weapon / HitRegistry → IDamageable.TakeDamage → path เดียวกัน
+
+--------------------------------------------------------------------------------
+10. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 1:
+  - MonoBehaviour lifecycle (Awake, Start, Update)
+  - ScriptableObject basics (Create menu, assign to field)
+  - C# events / delegates (concept — ใช้ Action<> ใน template)
+
+Unity Learn สอน SO ทั่วไป
+DocCode + UnitySetup บอกว่า template ใช้ CharacterStats + characterId สำหรับ save
+
+--------------------------------------------------------------------------------
+11. ทดสอบว่า Phase 1 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 1 สำเร็จ ไม่มี Missing Script
+[ ] Hero_Default.asset อยู่ใน Data/Characters/
+[ ] Player.prefab มี CharacterBase.stats = Hero_Default
+[ ] PrototypeGameplay มี Player ที่ PlayerSpawn
+[ ] Play → K ลด HP (Inspector Current Health)
+[ ] Play → H เพิ่ม HP ไม่เกิน max
+[ ] Play → K จน HP=0 → IsAlive = false
+[ ] Play → Y ฟื้น → IsAlive = true, HP เต็ม
+[ ] DisplayDelayHealth ตาม Primary ช้ากว่า (delay bar logic)
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 1
+
+--------------------------------------------------------------------------------
+12. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด AI = ผ่าน Phase 1)
+--------------------------------------------------------------------------------
+
+1) SO กับ MonoBehaviour เก็บข้อมูลต่างกันอย่างไร — ยก Hero_Default เป็นตัวอย่าง
+2) currentHealth อยู่ที่ไหน — ทำไมไม่เก็บใน .asset?
+3) Composition ใน template: Player มี component อะไรบ้าง (อย่างน้อย 3 ตัว)
+4) OnHealthChanged ใคร invoke ใคร subscribe (Phase 1 vs Phase 4)
+5) Primary vs Delay HP ต่างกันอย่างไร
+6) characterId ใช้ทำอะไรใน Phase 9 (ทายจากชื่อ field)
+7) Faction Friendly vs Enemy ใช้เมื่อไหร่
+8) ทำไม CharacterDamageTester ไม่ควรอยู่ใน build จริง
+
+--------------------------------------------------------------------------------
+13. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 2 ใน DocCode ด้านล่าง (Input, CharacterController, PlayerController)
+→ template/Plan/UnitySetup.md Phase 2
+→ รัน FPSGame → Setup Phase 2 (Player Controller)
+
+================================================================================
+PHASE 2 — ต้องรู้: Input, FPS Movement, CharacterController, PlayerController
+================================================================================
+
+เป้าหมาย Phase 2
+  เมื่อจบ Phase 2 คุณต้องอธิบายได้ว่า:
+  - Legacy Input อ่าน WASD / mouse / Space อย่างไร
+  - ทำไม FPS template ใช้ CharacterController ไม่ใช่ Rigidbody
+  - Yaw กับ Pitch หมุนที่ object ไหน
+  - PlayerController อ่าน CharacterStats จาก CharacterBase อย่างไร
+  - Input ไป WeaponHandler ผ่านอะไร (Phase 3 จะใส่อาวุธจริง)
+  - Pause / ตาย แล้วทำไมหยุดเคลื่อนที่
+
+Prerequisites: Phase 1 ผ่าน (Player.prefab + CharacterBase + Hero_Default)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 2 แก้ — มี HP แล้ว แต่ยังเล่นไม่ได้
+--------------------------------------------------------------------------------
+
+Phase 1 ให้ตัวละคร "มีชีวิต" (HP, damage, heal)
+Phase 2 ให้ผู้เล่น "ควบคุมได้":
+  - มองรอบด้วยเมาส์ (FPS look)
+  - เดิน / วิ่ง / กระโดด บนพื้น
+  - ส่งคำสั่งอาวุธ (ยิง, reload, เปลี่ยน slot) — logic อาวุธจริงใน Phase 3
+
+แยกหน้าที่ชัด (composition ต่อจาก Phase 1):
+
+  CharacterBase      = HP, ตาย, stats reference
+  PlayerController   = อ่าน input → เคลื่อนที่ + สั่งอาวุธ
+  CharacterController= Unity component ชนพื้น / กระโดด (ไม่ใช่ Rigidbody)
+
+AI ใน Phase 7 ใช้ AIController แทน PlayerController — ใช้ CharacterBase ร่วมกัน
+
+--------------------------------------------------------------------------------
+2. Legacy Input Manager — template ใช้ตัวนี้ (ไม่ใช่ Input System package)
+--------------------------------------------------------------------------------
+
+Unity มี 2 ระบบ input — template นี้ใช้ Legacy (Built-in):
+
+  Project Settings → Input Manager (หรือ axes เริ่มต้นของ Unity)
+
+  แกน / ปุ่มที่ PlayerController ใช้:
+
+  | Input API                    | ปุ่ม / แกน        | ทำอะไร              |
+  |------------------------------|-------------------|----------------------|
+  | GetAxisRaw("Horizontal")     | A / D             | ซ้าย-ขวา             |
+  | GetAxisRaw("Vertical")       | W / S             | หน้า-หลัง            |
+  | GetButtonDown("Jump")        | Space             | กระโดด               |
+  | GetAxis("Mouse X/Y")         | ขยับเมาส์         | มองรอบ               |
+  | GetMouseButton(0)            | LMB               | ยิง / ฟัน (primary)  |
+  | GetMouseButton(1)            | RMB               | aim (เดินช้า)        |
+  | GetKey(LeftShift/RightShift) | Shift             | sprint               |
+  | GetKeyDown(R)                | R                 | reload               |
+  | GetKeyDown(Alpha1/2/3)       | 1 / 2 / 3         | weapon slot          |
+  | GetAxis("Mouse ScrollWheel") | scroll            | สลับ slot            |
+
+GetAxisRaw vs GetAxis:
+  Raw = -1, 0, 1 ทันที (WASD) — เดิน FPS ใช้ Raw
+  Axis มี smoothing — mouse ใช้ GetAxis("Mouse X") ได้
+
+ไม่ต้องติดตั้ง com.unity.inputsystem ถ้าทำตาม template นี้
+(UnityBootstrap อาจพูดถึง Input System — ข้ามได้ถ้าใช้ Legacy)
+
+--------------------------------------------------------------------------------
+3. CharacterController — เคลื่อนที่ FPS แบบไม่ใช้ Rigidbody
+--------------------------------------------------------------------------------
+
+Rigidbody + Collider = ฟิสิกส์จริง (กระเด็น, ถูก force ผลัก)
+CharacterController = capsule เดินเอง — เหมาะ FPS / third-person ทั่วไป
+
+Phase 2 Setup ลบ Rigidbody + CapsuleCollider เก่า (ถ้ามีจาก Phase 1 รุ่นแรก)
+แล้วใส่ CharacterController:
+
+  height = 2, radius = 0.4, center = (0, 1, 0)
+  slopeLimit = 45, stepOffset = 0.3
+
+เคลื่อนที่ด้วย Move() — ไม่ใช้ transform.position ตรงๆ:
+
+  controller.Move(moveDirection * speed * Time.deltaTime);
+
+isGrounded — เช็คติดพื้นก่อนกระโดด:
+
+  bool grounded = controller.isGrounded;
+  character.SetGrounded(grounded);   // ส่งให้ CharacterBase รู้ (animation ภายหลัง)
+
+Gravity + Jump ใช้ velocity.y แยกจากการเดินแนวราบ:
+
+  if (Input.GetButtonDown("Jump") && grounded && jumpsUsed < stats.jumpLimit)
+      velocity.y = Mathf.Sqrt(stats.jumpHeight * -2f * stats.gravity);
+
+  velocity.y += stats.gravity * Time.deltaTime;
+  controller.Move(velocity * Time.deltaTime);
+
+ค่า jumpHeight, gravity, jumpLimit มาจาก CharacterStats (SO) — ไม่ hardcode ใน PlayerController
+
+Ground ใน scene ต้องมี Collider + Layer Ground (Phase 0)
+
+--------------------------------------------------------------------------------
+4. FPS Look — แยก Yaw (ตัว) กับ Pitch (กล้อง)
+--------------------------------------------------------------------------------
+
+FPS มาตรฐาน:
+  หมุนซ้าย-ขวา (Yaw)   → หมุน root Player (transform)
+  หมุนขึ้น-ลง (Pitch)  → หมุน Camera child เท่านั้น
+
+  // Yaw — โลก
+  transform.Rotate(Vector3.up, mouseX, Space.World);
+
+  // Pitch — local กล้อง, clamp ไม่ให้หมุนคว่ำ
+  pitch -= mouseY;
+  pitch = Mathf.Clamp(pitch, minPitch, maxPitch);   // default -80 .. 80
+  cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+
+cameraPivot = Transform ของ Camera (ลากใน Inspector)
+ทิศเดิน WASD ใช้ transform.forward / transform.right ของ Player root
+→ เดินตามทิศที่หันหน้า (yaw) ไม่ตาม pitch
+
+Cursor lock ตอนเล่น:
+
+  Cursor.lockState = CursorLockMode.Locked;
+  Cursor.visible = false;
+  // GameplayPauseUI / Phase 5 จะปลด lock ตอน pause menu
+
+--------------------------------------------------------------------------------
+5. PlayerController — โครงสร้างและ RequireComponent
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/Core/PlayerController.cs
+
+  [RequireComponent(typeof(CharacterBase))]
+  [RequireComponent(typeof(CharacterController))]
+  public class PlayerController : MonoBehaviour
+
+RequireComponent = Unity บังคับให้มี component คู่บน GameObject เดียวกัน
+
+Reference ใน Inspector:
+
+  [SerializeField] private Transform cameraPivot;      // Camera transform
+  [SerializeField] private WeaponHandler weaponHandler; // บน WeaponMount (Phase 3)
+  [SerializeField] private float mouseSensitivity = 2f;
+  [SerializeField] private float aimMoveSpeedMultiplier = 0.5f;
+
+Awake — หา reference อัตโนมัติถ้าไม่ได้ลาก:
+
+  character = GetComponent<CharacterBase>();
+  controller = GetComponent<CharacterController>();
+  weaponHandler = GetComponentInChildren<WeaponHandler>();
+
+Update loop (ลำดับสำคัญ):
+
+  if (GameplayPauseService.IsPaused) return;     // Phase 5
+  if (!character.IsAlive) return;               // ตายแล้วไม่รับ input
+
+  HandleLook();
+  HandleMovement();
+  HandleWeaponInput();
+  UpdateAnimator();   // optional — MoveX, MoveY, Speed
+
+--------------------------------------------------------------------------------
+6. การเดิน — อ่าน stats, sprint, aim slow
+--------------------------------------------------------------------------------
+
+ทิศจาก input สัมพันธ์กับทิศหันหน้า:
+
+  Vector3 move = transform.right * horizontal + transform.forward * vertical;
+  if (move.sqrMagnitude > 1f) move.Normalize();   // ไม่วิ่งเร็วขึ้นเมื่อกด W+D
+
+ความเร็วจาก CharacterStats:
+
+  float speed = stats.walkSpeed;
+  if (isAiming)       speed *= aimMoveSpeedMultiplier;   // RMB ค้าง — ช้าลง
+  else if (isSprinting) speed = stats.sprintSpeed;     // Shift + WASD
+
+Sprint ต้องกำลังเคลื่อนที่ และไม่ aim:
+
+  isSprinting = sprint && (horizontal != 0 || vertical != 0) && !isAiming;
+
+PlayerNoiseEmitter.SetSprinting — เตรียม AI ได้ยิน (Phase 7)
+  เรียกจาก PlayerController ตอน sprint — ไม่ต้องมี component บน Player ก็ทำงาน (static)
+
+MoveInput property — เก็บ input 2D ให้ Animator / debug อ่าน:
+
+  public Vector2 MoveInput { get; private set; }
+
+--------------------------------------------------------------------------------
+7. คำสั่งอาวุธ — ส่งต่อให้ WeaponHandler (Phase 3 ใส่ asset)
+--------------------------------------------------------------------------------
+
+PlayerController ไม่คำนวณ damage — แค่ส่งคำสั่ง:
+
+  if (Input.GetMouseButton(0))
+      weaponHandler.TryPrimaryAction();
+
+  if (Input.GetKeyDown(KeyCode.R))
+      weaponHandler.TryReload();
+
+  weaponHandler.SetActiveSlot(0);           // ปุ่ม 1
+  weaponHandler.CycleActiveSlot(1);         // scroll up
+
+Phase 2: WeaponHandler อาจยังไม่มี weapon asset → LMB ไม่ยิงจริง แต่ไม่ error
+Phase 3: ใส่ pistol + knife ใน slot → LMB/R ทำงานเต็ม
+
+Data flow:
+
+  Input → PlayerController.HandleWeaponInput()
+       → WeaponHandler (Phase 3+)
+       → HitRegistry → CharacterBase.TakeDamage (Phase 6)
+
+--------------------------------------------------------------------------------
+8. Setup Phase 2 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 2 (Player Controller)
+
+ต้องมี Player.prefab จาก Phase 1 ก่อน
+
+ทำให้ prefab:
+  - ลบ Rigidbody + CapsuleCollider (legacy)
+  - เพิ่ม CharacterController (ค่า height/radius/center)
+  - เพิ่ม PlayerController
+  - wire cameraPivot → Camera, weaponHandler → WeaponMount/WeaponHandler
+  - wire WeaponHandler.muzzle → WeaponMount transform
+
+Phase 1 setup รุ่นใหม่ อาจรวม Phase 2 แล้ว — ใช้เมนู Phase 2 เมื่อ prefab เก่ายังไม่มี PlayerController
+
+Inspector สรุป (มือ):
+
+  | Component           | Field              | ค่า                    |
+  |---------------------|--------------------|-------------------------|
+  | CharacterController | height/radius/center | 2 / 0.4 / (0,1,0)   |
+  | PlayerController    | cameraPivot        | Camera transform        |
+  | PlayerController    | weaponHandler      | WeaponMount → handler   |
+  | PlayerController    | mouseSensitivity   | 2                       |
+  | PlayerController    | aimMoveSpeedMultiplier | 0.5                 |
+
+Hierarchy ไม่เปลี่ยนจาก Phase 1:
+
+  Player
+  ├── Camera
+  └── WeaponMount   ← WeaponHandler อยู่ที่นี่ (Phase 3)
+
+--------------------------------------------------------------------------------
+9. Data Flow Phase 2 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Input devices]
+  Keyboard + Mouse
+       │
+       ▼
+  PlayerController.Update()
+       ├── HandleLook()     → transform yaw + cameraPivot pitch
+       ├── HandleMovement() → CharacterStats (SO) ผ่าน character.Stats
+       │                      → CharacterController.Move
+       │                      → character.SetGrounded
+       └── HandleWeaponInput() → WeaponHandler (Phase 3+)
+
+  CharacterBase (Phase 1) ไม่รู้จัก input — แค่ถูกอ่าน IsAlive, Stats
+
+  GameplayPauseService.IsPaused (Phase 5) กั้น Update ทั้งก้อน
+
+--------------------------------------------------------------------------------
+10. Animator (optional — ยังไม่บังคับ Phase 2)
+--------------------------------------------------------------------------------
+
+ถ้ามี Animator บน Player — PlayerController ส่งค่า:
+
+  animator.SetFloat("MoveX", MoveInput.x);
+  animator.SetFloat("MoveY", MoveInput.y);
+  animator.SetFloat("Speed", MoveInput.magnitude * walkSpeed);
+
+ใช้ lower-body blend tree ในอนาคต (Plantext — 4 ทิศขา)
+Phase 2 ทดสอบ movement ได้โดยไม่มี Animator
+
+--------------------------------------------------------------------------------
+11. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 2:
+  - First person movement / player controller tutorials
+  - Character Controller component overview
+  - (C#) reading input in Update
+
+Unity Learn อาจใช้ Rigidbody ในบาง course — template นี้ใช้ CharacterController ตาม UnitySetup
+
+--------------------------------------------------------------------------------
+12. ทดสอบว่า Phase 2 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 2 สำเร็จ (หรือ prefab มี PlayerController แล้ว)
+[ ] Play → cursor lock, mouse look ได้ (yaw + pitch)
+[ ] WASD เดินบน Ground, ไม่ทะลุพื้น
+[ ] Shift + WASD เร็วกว่าเดิน (sprintSpeed จาก Hero_Default)
+[ ] Space กระโดด — jumpLimit จาก stats (default 1 ครั้งก่อนติดพื้น)
+[ ] RMB ค้าง → เดินช้าลง (aimMoveSpeedMultiplier)
+[ ] LMB เรียก WeaponHandler — ไม่ error (ยิงจริงหลัง Phase 3)
+[ ] Scroll / 1-2-3 เปลี่ยน slot — ไม่ error
+[ ] กด K จนตาย → WASD/mouse ไม่ทำงาน (IsAlive gate)
+[ ] Phase 5 แล้ว: Escape pause → หยุดเคลื่อนที่
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 2
+
+--------------------------------------------------------------------------------
+13. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด AI = ผ่าน Phase 2)
+--------------------------------------------------------------------------------
+
+1) ทำไมใช้ CharacterController แทน Rigidbody ใน FPS template นี้?
+2) Yaw หมุนที่ transform ไหน Pitch หมุนที่ไหน?
+3) walkSpeed / sprintSpeed / jumpHeight มาจาก class ไหน field ไหน?
+4) PlayerController กับ CharacterBase อยู่บน GameObject เดียวกัน — เรียกความสัมพันธ์นี้ว่าอะไร?
+5) ทำไม Update ต้องเช็ค IsAlive และ IsPaused?
+6) Time.deltaTime ใช้ตอน Move ทำไม?
+7) Input ไปถึง damage จริงต้องผ่าน class อะไรบ้าง (Phase 2–3–6)?
+8) GetAxisRaw("Horizontal") คืนค่าอะไรเมื่อกด D อย่างเดียว?
+
+--------------------------------------------------------------------------------
+14. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 3 ใน DocCode ด้านล่าง (WeaponData, Hitscan, Melee, WeaponHandler)
+→ template/Plan/UnitySetup.md Phase 3
+→ รัน FPSGame → Setup Phase 3 (Weapons)
+
+================================================================================
+PHASE 3 — ต้องรู้: WeaponData, WeaponHandler, Hitscan, Melee, Ammo, Reload
+================================================================================
+
+เป้าหมาย Phase 3
+  เมื่อจบ Phase 3 คุณต้องอธิบายได้ว่า:
+  - แยก WeaponData (SO) กับ WeaponHandler (runtime) อย่างไร
+  - Hitscan กับ Melee ทำงานต่างกันอย่างไร
+  - slot 1–2–3 ใน code = index 0,1,2
+  - reload 3 phase คืออะไร ทำไม dump clip ตอนเริ่ม reload
+  - กระสุนหมดแล้วเกิดอะไร (auto TryReload)
+  - damage ไปถึง TestDummy ผ่าน path ไหน (HitRegistry — polish Phase 6)
+  - weaponId ใช้ save/loadout อย่างไร (Phase 9)
+
+Prerequisites: Phase 2 ผ่าน (PlayerController + WeaponHandler บน WeaponMount)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 3 แก้ — มี input แล้ว แต่ยังไม่มีอาวุธจริง
+--------------------------------------------------------------------------------
+
+Phase 2: LMB เรียก weaponHandler.TryPrimaryAction() แต่ slot ว่าง → ไม่เกิดอะไร
+Phase 3: ใส่ข้อมูลอาวุธ + logic ยิง/ฟัน/reload
+
+หลักการสำคัญ (เหมือน CharacterStats ใน Phase 1):
+  ข้อมูล balance (damage, clip, range) อยู่ใน ScriptableObject
+  logic รuntime (ยิงเมื่อไหร่, ลดกระสุน) อยู่ใน WeaponHandler (MonoBehaviour)
+
+Player ถืออาวุธ 3 slot — ปืนและมีดอยู่ slot เดียวกันในระบบ (Plantext: melee = weapon)
+
+--------------------------------------------------------------------------------
+2. ลำดับชั้น WeaponData — SO hierarchy
+--------------------------------------------------------------------------------
+
+  WeaponData (abstract SO)
+  ├── RangedWeaponData (abstract)
+  │   ├── HitscanWeaponData    ← pistol template
+  │   └── ProjectileWeaponData ← อนาคต (logic มีใน WeaponHandler แล้ว)
+  └── MeleeWeaponData          ← knife template
+
+WeaponData — ค่าร่วมทุชนิด:
+
+  public string weaponId;        // "pistol_01" — ใช้ใน JSON save
+  public string displayName;     // "Pistol" — แสดง HUD
+  public WeaponCategory category; // Hitscan | Projectile | Melee
+  public float damage;
+  public float attackCooldown;   // ระยะห่างระหว่าง shot/swing
+
+RangedWeaponData — เฉพาะปืน:
+
+  public int clipSize = 30;
+  public int magazineCount = 3;      // แมกสำรอง (reserve)
+  public float spreadDegrees = 1f;
+  public float reloadPhaseDuration = 0.2f;   // ต่อ phase
+
+HitscanWeaponData — ปืน raycast:
+
+  public float baseHitDelay = 0.01f;
+  public float extraDelayPer100m = 0.01f;
+  public float maxRange = 300f;
+  public int penetration = 0;        // ทะลุ unit ได้กี่ตัว (0 = 1 เป้า)
+  public GameObject bulletHolePrefab;
+
+MeleeWeaponData — มีด/ค้อน:
+
+  public float activeTime = 0.01f;   // hitbox อยู่กี่วินาที
+  public Vector3 hitboxSize;
+  public Vector3 hitboxOffset;       // 相对 muzzle
+
+สร้างมือ: Project → Create → FPSGame → Weapons → Hitscan / Melee
+
+Phase 3 Setup สร้างให้:
+  Data/Weapons/pistol_hitscan.asset   weaponId = pistol_01
+  Data/Weapons/knife_melee.asset      weaponId = knife_01
+
+--------------------------------------------------------------------------------
+3. WeaponHandler — runtime บน WeaponMount
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/Weapons/WeaponHandler.cs
+ติดบน child WeaponMount ใต้ Player
+
+Reference:
+
+  [SerializeField] private Transform muzzle;              // จุดยิง / ต้นทาง ray
+  [SerializeField] private WeaponData[] weaponSlots = new WeaponData[3];
+  [SerializeField] private LayerMask hitMask;
+
+  private CharacterBase owner;   // Awake: GetComponentInParent<CharacterBase>()
+
+Slot index vs ปุ่ม:
+
+  | ปุ่ม 1/2/3 | index | Phase 3 default      |
+  |------------|-------|----------------------|
+  | 1          | 0     | pistol_hitscan       |
+  | 2          | 1     | knife_melee          |
+  | 3          | 2     | empty                |
+
+Public API ที่ PlayerController / Save / HUD เรียก:
+
+  SetActiveSlot(int slot)
+  CycleActiveSlot(int direction)
+  TryPrimaryAction()      // LMB
+  TryReload()             // R — ranged เท่านั้น
+  SetWeaponSlot(int slot, WeaponData weapon)   // loadout Phase 9/11
+  GetClipAmmo / GetReserveMagazines / CurrentWeapon
+
+Events (Phase 4 HUD ฟัง):
+
+  OnAmmoChanged(slot, clip, reserve)
+  OnReloadPhaseChanged(ReloadPhase)
+  OnActiveSlotChanged(slot)
+
+WeaponSlotState — กระสุน runtime ต่อ slot (ไม่เก็บใน SO):
+
+  clipAmmo, reserveMagazines — สร้างตอน EnsureSlotInitialized จาก clipSize/magazineCount
+
+--------------------------------------------------------------------------------
+4. TryPrimaryAction — แยกตาม WeaponCategory
+--------------------------------------------------------------------------------
+
+  public void TryPrimaryAction()
+  {
+      if (IsReloading) CancelReload();     // LMB ระหว่าง reload = ยกเลิก
+      if (Time.time < nextFireTime) return;
+
+      switch (weapon.category)
+      {
+          case WeaponCategory.Hitscan:
+              if (TryFireRanged(...)) FireHitscan(...);
+              break;
+          case WeaponCategory.Melee:
+              StartMelee(...);
+              break;
+          case WeaponCategory.Projectile:
+              if (TryFireRanged(...)) FireProjectile(...);
+              break;
+      }
+  }
+
+TryFireRanged — ก่อนยิงจริง:
+  - clipAmmo <= 0 → TryReload() อัตโนมัติ, return false
+  - clipAmmo-- , ตั้ง nextFireTime จาก attackCooldown
+
+Melee — ไม่ใช้ clip (ไม่มี TryFireRanged)
+
+--------------------------------------------------------------------------------
+5. Hitscan — ray จาก muzzle, delay damage, penetration
+--------------------------------------------------------------------------------
+
+FireHitscan ขั้นตอน:
+
+  1) origin = muzzle.position, direction = muzzle.forward (+ spread)
+  2) HitRegistry.ResolveHitscanRay(...) → รายการ unit ที่โดน + obstacle
+  3) แต่ละ unit: คำนวณ delay ตามระยะ → ScheduleHitscanDamage
+  4) ชนสิ่งกีดขวาง (ไม่ใช่ unit): SpawnBulletHole prefab
+
+Delay (Plantext §4):
+  ใกล้ = ~0.01s, ไกล = baseHitDelay + extra ต่อ 100m เกิน referenceRange
+
+Penetration:
+  penetration = 0 → โดน hostile unit ได้ 1 ตัว (count = penetration + 1)
+  friendly / dead ข้าม — ไม่กิน penetration slot
+
+  Phase 3 ทดสอบ: ยิง TestDummy @ (5,1,0) — HP ลดหลัง delay เล็กน้อย
+  ยิงผนัง/Ground — bullet_hole_placeholder ปรากฏ
+
+Raycast แนวคิด (HitRegistry ทำให้):
+
+  Physics.Raycast(origin, direction, out hit, maxRange, hitMask);
+
+Phase 6 polish HitRegistry + IDamageable — Phase 3 ใช้ path เดียวกันแล้ว
+
+--------------------------------------------------------------------------------
+6. Melee — hitbox ชั่วคราว, 1 hit ต่อเป้า ต่อ swing
+--------------------------------------------------------------------------------
+
+StartMelee:
+
+  1) meleeSwingSequence++ → swingId ไม่ซ้ำต่อ swing
+  2) สร้าง GameObject ชั่วคราว + BoxCollider (isTrigger)
+  3) Layer Hitbox (Phase 0)
+  4) MeleeHitbox.Initialize(owner, damage, size, swingId)
+  5) Destroy(hitboxGo, activeTime);   // ~0.01s
+
+MeleeHitbox.OnTriggerEnter:
+
+  HitRegistry.TryGetDamageable(collider, out target)
+  HitRegistry.TryApplyMeleeHit(swingId, target, damage, owner)
+  → กันตีซ้ำ target เดิมใน swing เดียว
+
+ทดสอบ: slot 2 (knife) + LMB ใกล้ TestDummy — โดน 1 ครั้ง/swing
+
+--------------------------------------------------------------------------------
+7. Reload — 3 phase, dump clip, cancel ได้
+--------------------------------------------------------------------------------
+
+ReloadPhase enum:
+
+  None → Eject → Insert → Chamber → None (เสร็จ)
+
+BeginReload (กด R หรือ auto เมื่อ clip หมด):
+  - clipAmmo = 0 ทันที (dump กระสุนในแมก — design template)
+  - reserveMagazines > 0 และ clip ไม่เต็มอยู่แล้ว
+  - แต่ละ phase ใช้เวลา reloadPhaseDuration (default 0.2s) → รวม ~0.6s
+
+CompleteReload:
+  clipAmmo = clipSize
+  reserveMagazines -= 1
+
+CancelReload:
+  LMB ระหว่าง reload → หยุดกลางคัน (TryPrimaryAction เรียก CancelReload ก่อน)
+
+TickReload ใน Update — ใช้ Time.time (หยุดเมื่อ pause Phase 5)
+
+R กับ melee slot — TryReload return false (ไม่ใช่ RangedWeaponData)
+
+--------------------------------------------------------------------------------
+8. Spread, LayerMask, เสียง (เชื่อม Phase 7)
+--------------------------------------------------------------------------------
+
+ApplySpread — สุ่มมุมเล็กน้อยรอบ muzzle.forward (spreadDegrees จาก SO)
+
+hitMask — เลือก layer ที่ ray ชนได้ (ตั้งใน Inspector)
+
+NotifyFriendlyGunshot → PlayerNoiseEmitter.RegisterGunshot
+  AI Phase 7 ใช้ได้ยินเสียงยิง
+
+--------------------------------------------------------------------------------
+9. TestDummy — เป้าทดสอบ Phase 3
+--------------------------------------------------------------------------------
+
+Phase 3 Setup สร้าง:
+  Data/Characters/Enemy_Default.asset
+  Prefabs/Player/TestDummy_Enemy.prefab @ ตำแหน่ง (5, 1, 0)
+
+TestDummy มี CharacterBase + faction Enemy — รับ damage จาก hitscan/melee
+แทนที่ด้วย AI Enemy Phase 7 ใน production
+
+ทดสอบ knife: เดินเข้าใกล้ dummy แล้ว slot 2 + LMB
+
+--------------------------------------------------------------------------------
+10. Setup Phase 3 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 3 (Weapons)
+
+สร้าง/wire:
+  pistol_hitscan.asset, knife_melee.asset
+  bullet_hole_placeholder.prefab
+  TestDummy ใน PrototypeGameplay
+  Player → WeaponHandler.weaponSlots[0]=pistol, [1]=knife, [2]=empty
+  muzzle = WeaponMount transform
+
+Inspector WeaponHandler:
+
+  | Field          | ค่า Phase 3              |
+  |----------------|---------------------------|
+  | muzzle         | WeaponMount               |
+  | weaponSlots[0] | pistol_hitscan            |
+  | weaponSlots[1] | knife_melee               |
+  | weaponSlots[2] | (none)                    |
+  | hitMask        | Everything หรือตาม layer  |
+
+--------------------------------------------------------------------------------
+11. Data Flow Phase 3 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Input] LMB / R / 1-2-3
+       ▼
+  PlayerController.HandleWeaponInput()
+       ▼
+  WeaponHandler.TryPrimaryAction() / TryReload()
+       │
+       ├── Hitscan: FireHitscan → HitRegistry → ScheduleHitscanDamage
+       │            → (delay) → IDamageable.TakeDamage → CharacterBase
+       │
+       ├── Melee: StartMelee → MeleeHitbox trigger
+       │          → HitRegistry.TryApplyMeleeHit → TakeDamage
+       │
+       └── Reload: TickReload FSM → clipAmmo / reserve อัปเดต
+       ▼
+  OnAmmoChanged / OnActiveSlotChanged → (Phase 4 HUD)
+
+  weaponId ใน SO → Phase 9 SaveProfileService.loadoutWeaponIds[]
+
+--------------------------------------------------------------------------------
+12. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 3:
+  - Physics.Raycast / RaycastHit
+  - Triggers และ OnTriggerEnter
+  - Coroutines หรือ time-based state (reload ใช้ Time.time + enum phase)
+  - ScriptableObject สำหรับ game data
+
+Unity Learn อาจสอนยิงแบบ Instantiate bullet — template hitscan ใช้ ray ทันที
+
+--------------------------------------------------------------------------------
+13. ทดสอบว่า Phase 3 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 3 สำเร็จ
+[ ] Slot 1 + LMB → TestDummy HP ลด (hitscan)
+[ ] ยิงผนัง → bullet hole placeholder
+[ ] R → reload 3 phase, reserve mag ลด 1
+[ ] ยิงจน clip หมด → พยายาม reload อัตโนมัติ
+[ ] LMB ระหว่าง reload → cancel
+[ ] Slot 2 + LMB ใกล้ dummy → melee damage 1 ครั้ง/swing
+[ ] Scroll / 1-2-3 สลับ slot — ปืน/มีด ทำงานถูกชนิด
+[ ] penetration=0 — ไม่ทะลุ dummy หลายครั้งจากนัดเดียว (ทดสอบเมื่อมีศัตรูเรียง)
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 3
+
+--------------------------------------------------------------------------------
+14. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด AI = ผ่าน Phase 3)
+--------------------------------------------------------------------------------
+
+1) WeaponData กับ WeaponHandler เก็บ/ทำอะไรต่างกัน?
+2) ทำไม clipAmmo อยู่ WeaponSlotState ไม่ใส่ใน .asset?
+3) Hitscan กับ Melee เริ่มจาก TryPrimaryAction แตก branch อย่างไร?
+4) reload 3 phase ชื่ออะไร ใช้เวลารวมประมาณเท่าไร (default)?
+5) ทำไม BeginReload ตั้ง clipAmmo = 0 ทันที?
+6) weaponId ใช้ทำอะไรใน save system?
+7) muzzle คืออะไร — ถ้าไม่ assign จะเกิดอะไร?
+8) penetration=0 หมายถึงโดนกี่ unit สูงสุด?
+
+--------------------------------------------------------------------------------
+15. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 4 ใน DocCode ด้านล่าง (HUD, dual HP bar, weapon slot UI, wallet)
+→ template/Plan/UnitySetup.md Phase 4
+→ รัน FPSGame → Setup Phase 4 (HUD)
+
+================================================================================
+PHASE 4 — ต้องรู้: Gameplay HUD, uGUI, Events, Loose Coupling
+================================================================================
+
+เป้าหมาย Phase 4
+  เมื่อจบ Phase 4 คุณต้องอธิบายได้ว่า:
+  - Canvas / uGUI แสดง HUD บนจอ gameplay อย่างไร
+  - ทำไม HUD ฟัง event ไม่เรียก TakeDamage โดยตรง
+  - Primary HP bar กับ Delay bar อัปเดตต่างกันอย่างไร
+  - WeaponSlotHudUI รู้ slot ไหน active และ ammo จากไหน
+  - GameplayHudManager ผูก Player กับ widget อย่างไร
+  - PlayerWallet เชื่อม save ใน Phase 9 อย่างไร
+
+Prerequisites: Phase 3 ผ่าน (อาวุธ + TestDummy), HUD_Canvas จาก Phase 0
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 4 แก้ — เล่นได้แล้ว แต่ผู้เล่นไม่เห็นสถานะ
+--------------------------------------------------------------------------------
+
+Phase 1–3: HP, อาวุธ, กระสุน ทำงานใน code — แต่เห็นได้แค่ Inspector / Console
+Phase 4: แสดงบนจอ:
+  - หลอดเลือดสองชั้น (Primary + Delay)
+  - อาวุธ slot 1–3 + กระสุน
+  - เงินใน wallet
+
+หลัก Loose Coupling (Plantext):
+  Gameplay (CharacterBase, WeaponHandler) ไม่รู้จัก class UI
+  UI subscribe event → อัปเดต Image/Text เมื่อค่าเปลี่ยน
+
+--------------------------------------------------------------------------------
+2. uGUI พื้นฐาน — Canvas, Image, Text
+--------------------------------------------------------------------------------
+
+template ใช้ Unity UI (uGUI) — ไม่ใช่ UI Toolkit
+
+Canvas (Phase 0 สร้าง HUD_Canvas ใน PrototypeGameplay):
+  Render Mode: Screen Space Overlay — วาดทับภาพ Game view ตลอด
+  CanvasScaler — Scale With Screen Size (1920×1080 reference)
+
+องค์ประกอบ HUD Phase 4:
+
+  | UI element | ใช้ทำอะไร                          |
+  |------------|-------------------------------------|
+  | Image      | แถบ HP (fillAmount 0–1)            |
+  | Text       | ชื่ออาวุธ, ammo, เงิน              |
+  | GameObject | กลุ่ม widget ต่อ panel             |
+
+Image.fillAmount — แถบ HP แบบง่าย:
+
+  primaryFill.fillAmount = currentHealth / maxHealth;   // 0.0 .. 1.0
+
+EventSystem (Phase 0) — HUD Phase 4 ยังไม่กดปุ่ม pause (Phase 5)
+แต่ Canvas อยู่ใต้ hierarchy เดียวกับ pause menu ภายหลัง
+
+Package: com.unity.ugui — ดู UnityBootstrap/manifest.json.example
+FPSGame.Runtime.asmdef ต้อง reference Unity.UGUI
+
+--------------------------------------------------------------------------------
+3. GameplayHudManager — จุดเชื่อม HUD กับ Player
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/UI/GameplayHudManager.cs
+อยู่บน GameplayHUD prefab ใต้ HUD_Canvas
+
+Start → หา Player ด้วย Tag แล้ว Bind:
+
+  var player = GameObject.FindGameObjectWithTag("Player");
+  Bind(player);
+
+Bind แยก component แล้วส่งให้ widget:
+
+  var character = player.GetComponent<CharacterBase>();
+  var weaponHandler = player.GetComponentInChildren<WeaponHandler>();
+  var wallet = player.GetComponent<PlayerWallet>();
+
+  healthBar.Bind(character);
+  weaponSlotHud.Bind(weaponHandler);
+  walletHud.Bind(wallet);
+
+ทำไม GetComponentInChildren สำหรับ WeaponHandler?
+  WeaponHandler อยู่บน WeaponMount (child) ไม่ใช่ root Player
+
+ถ้า Player spawn ทีหลัง — เรียก Bind(player) เองจาก bootstrap
+
+--------------------------------------------------------------------------------
+4. DualLayerHealthBarUI — Primary ทันที, Delay ตาม
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/UI/DualLayerHealthBarUI.cs
+
+Primary bar (primaryFill):
+  ฟัง OnHealthChanged — อัปเดตทันทีเมื่อ TakeDamage/Heal
+
+  character.OnHealthChanged += HandleHealthChanged;
+  primaryFill.fillAmount = currentHealth / maxHealth;
+
+Delay bar (delayFill):
+  ไม่ฟัง event แยก — อ่าน DisplayDelayHealth ใน Update
+
+  delayFill.fillAmount = character.DisplayDelayHealth / maxHealth;
+
+Logic delay อยู่ใน CharacterBase.TickDelayHealthBar (Phase 1)
+UI แค่แสดงค่า DisplayDelayHealth ที่ค่อยๆ ตาม CurrentHealth
+
+ทดสอบ: กด K → แถบหน้า (Primary) ลดทันที, แถบหลัง (Delay) ค่อยๆ ตาม
+
+Unbind ใน OnDestroy — ป้องกัน memory leak / callback ค้าง:
+
+  character.OnHealthChanged -= HandleHealthChanged;
+
+--------------------------------------------------------------------------------
+5. WeaponSlotHudUI — slot 1–3, highlight, ammo
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/UI/WeaponSlotHudUI.cs
+
+SlotView struct ต่อ slot — ลากใน Inspector:
+
+  public Image background;
+  public Text label;
+
+ฟัง WeaponHandler events:
+
+  weaponHandler.OnAmmoChanged += HandleAmmoChanged;
+  weaponHandler.OnActiveSlotChanged += HandleActiveSlotChanged;
+
+แสดงผล:
+
+  ปุ่ม 1 = index 0 → "1: Pistol [12|3]"
+  RangedWeaponData → แสดง [clip|reserveMagazines]
+  MeleeWeaponData → แสดงชื่ออย่างเดียว (ไม่มี ammo)
+
+  background.color = activeColor เมื่อ ActiveSlot == index
+
+Scroll / 1-2-3 → OnActiveSlotChanged → RefreshAll
+
+ยิง / reload → OnAmmoChanged → RefreshSlot ที่เปลี่ยน
+
+--------------------------------------------------------------------------------
+6. PlayerWallet + WalletHudUI — เงินบนจอ
+--------------------------------------------------------------------------------
+
+PlayerWallet (บน Player root — Phase 4 Setup เพิ่ม component):
+
+  [SerializeField] private int startingBalance = 100;
+  public event Action<int> OnBalanceChanged;
+
+  Awake → balance = startingBalance → invoke event ครั้งแรก
+
+WalletHudUI:
+
+  wallet.OnBalanceChanged += HandleBalanceChanged;
+  valueText.text = "$ " + balance;
+
+Phase 9: SaveProfileService.ApplyWalletTo(playerWallet) ตอนเข้า gameplay
+Phase 9: CaptureWalletFrom เมื่อ save — HUD อัปเดตผ่าน SetBalance → event
+
+Gameplay ไม่ควรแก้ Text โดยตรง — ผ่าน PlayerWallet.SetBalance / Add
+
+--------------------------------------------------------------------------------
+7. สรุป Events ที่ HUD ใช้ (ไม่สร้าง dependency กลับ)
+--------------------------------------------------------------------------------
+
+  | แหล่ง            | Event                    | Widget              |
+  |------------------|--------------------------|---------------------|
+  | CharacterBase    | OnHealthChanged          | DualLayerHealthBar  |
+  | CharacterBase    | DisplayDelayHealth       | Delay bar (Update)  |
+  | WeaponHandler    | OnActiveSlotChanged      | WeaponSlotHudUI     |
+  | WeaponHandler    | OnAmmoChanged            | WeaponSlotHudUI     |
+  | PlayerWallet     | OnBalanceChanged         | WalletHudUI         |
+
+สิ่งที่ HUD ไม่ทำ:
+  - ไม่เรียก TakeDamage เพื่อทดสอบ bar
+  - ไม่เรียก TryPrimaryAction
+  - ไม่เขียน JSON save
+
+--------------------------------------------------------------------------------
+8. Setup Phase 4 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 4 (HUD)
+
+สร้าง/wire:
+  UI/HUD/GameplayHUD.prefab
+  วาง instance เป็น child ของ HUD_Canvas ใน PrototypeGameplay
+  เพิ่ม PlayerWallet บน Player.prefab
+
+Layout (แนะนำ):
+
+  | Widget                 | ตำแหน่งจอ   |
+  |------------------------|-------------|
+  | DualLayerHealthBarUI   | ล่างซ้าย    |
+  | WeaponSlotHudUI        | ล่างขวา     |
+  | WalletHudUI            | บนขวา       |
+
+GameplayHudManager ลาก reference:
+  healthBar, weaponSlotHud, walletHud
+
+DualLayerHealthBarUI ลาก primaryFill, delayFill (Image type Filled)
+
+WeaponSlotHudUI ลาก slots[0..2] background + label
+
+--------------------------------------------------------------------------------
+9. Data Flow Phase 4 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Gameplay]
+  TakeDamage / Heal
+       ▼
+  CharacterBase.OnHealthChanged
+       ▼
+  DualLayerHealthBarUI → primaryFill.fillAmount
+
+  CharacterBase.Update → DisplayDelayHealth
+       ▼
+  DualLayerHealthBarUI.Update → delayFill.fillAmount
+
+  WeaponHandler fire / reload / SetActiveSlot
+       ▼
+  OnAmmoChanged / OnActiveSlotChanged
+       ▼
+  WeaponSlotHudUI → label + highlight
+
+  PlayerWallet.SetBalance (Phase 9 จาก save)
+       ▼
+  OnBalanceChanged → WalletHudUI
+
+  [Scene load]
+  GameplayHudManager.Start → Find Player → Bind(all widgets)
+
+--------------------------------------------------------------------------------
+10. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 4:
+  - Canvas และ UI elements (Image, Text)
+  - Image Type: Filled (horizontal fill สำหรับ HP bar)
+  - UI layout anchors (มุมจอ responsive)
+  - C# events / delegates (Action<>)
+
+Unity Learn อาจใช้ Slider แทน Image.fillAmount — template ใช้ Image Filled
+
+--------------------------------------------------------------------------------
+11. ทดสอบว่า Phase 4 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 4 สำเร็จ
+[ ] Play → wallet แสดง $ 100 (หรือค่า startingBalance)
+[ ] กด K → Primary HP ลดทันที, Delay bar ตามหลัง
+[ ] Scroll / 1-2-3 → slot highlight เปลี่ยน, ชื่อ pistol/knife ถูก
+[ ] ยิง pistol → ammo [clip|reserve] ลดใน HUD
+[ ] R reload → ตัวเลข ammo อัปเดตหลังจบ reload
+[ ] ไม่มี Missing Script บน GameplayHUD prefab
+[ ] Player มี PlayerWallet component
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 4
+
+--------------------------------------------------------------------------------
+12. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด AI = ผ่าน Phase 4)
+--------------------------------------------------------------------------------
+
+1) ทำไม HUD ไม่ควรเรียก character.TakeDamage() เพื่ออัปเดต bar?
+2) Primary bar อัปเดตเมื่อไหร Delay bar อัปเดตเมื่อไหร?
+3) GameplayHudManager หา WeaponHandler ด้วย method อะไร ทำไม?
+4) OnAmmoChanged ส่ง parameter อะไรบ้าง?
+5) Melee slot แสดง ammo ไหม — ทำไม?
+6) ถ้าไม่ Unbind event ตอน Destroy จะเกิดอะไร?
+7) PlayerWallet กับ SaveProfileService เชื่อมกัน Phase ไหน?
+8) Canvas Screen Space Overlay ต่างจาก World Space อย่างไร (concept)?
+
+--------------------------------------------------------------------------------
+13. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 5 ใน DocCode ด้านล่าง (Pause, timeScale, GameplayPauseUI)
+→ template/Plan/UnitySetup.md Phase 5
+→ รัน FPSGame → Setup Phase 5 (Pause)
+
+================================================================================
+PHASE 5 — ต้องรู้: Pause, timeScale, Scene Flow, Gameplay Loop
+================================================================================
+
+เป้าหมาย Phase 5
+  เมื่อจบ Phase 5 คุณต้องอธิบายได้ว่า:
+  - Time.timeScale = 0 หยุดอะไร ไม่หยุดอะไร
+  - GameplayPauseService Push/Pop/ForceResume ต่างกันอย่างไร
+  - Escape เปิด pause แล้ว PlayerController หยุดเพราะอะไร (2 ชั้น)
+  - Resume / Restart / Back to Menu ทำอะไรกับ scene และ timeScale
+  - GameSceneFlow ทำไม ForceResume ก่อน LoadScene
+  - Back to Menu กับ MenuFlowState (Phase 10+) ทำงานร่วมกันอย่างไร
+
+Prerequisites: Phase 4 ผ่าน (HUD_Canvas ใน scene)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 5 แก้ — prototype ต้องหยุดเล่นและออกจากฉagiได้
+--------------------------------------------------------------------------------
+
+Phase 1–4: เล่นใน PrototypeGameplay ได้ แต่:
+  - ไม่มีปุ่มหยุดเกม
+  - ไม่มี restart ฉาก
+  - ไม่มีทางกลับเมนู (ก่อน Phase 10 จะ warning ใน Console)
+
+Phase 5 ปิด loop gameplay scene:
+  Pause → Resume
+  Restart → โหลด scene เดิมใหม่
+  Back to Menu → โหลด MainMenu (ต้องมีใน Build Settings หลัง Phase 10)
+
+--------------------------------------------------------------------------------
+2. Time.timeScale — หยุด "เวลาเกม" ไม่ใช่หยุดทั้ง Unity
+--------------------------------------------------------------------------------
+
+  Time.timeScale = 0f;   // pause — gameplay time หยุด
+  Time.timeScale = 1f;   // ปกติ
+
+เมื่อ timeScale = 0:
+  | หยุด / ช้าลง              | ยังทำงาน                    |
+  |---------------------------|-----------------------------|
+  | Time.time, Time.deltaTime | Update() ยังถูกเรียกทุก frame |
+  | Reload FSM (Time.time)    | Input.GetKeyDown (pause UI) |
+  | Delay HP bar (deltaTime)  | UI Button onClick           |
+  | Physics (โดยทั่วไป)       | GameplayPauseUI.Update      |
+
+PlayerController เช็ค IsPaused ก่อน input — แม้ Update ยังรัน ก็ไม่รับ WASD
+
+UI ใช้ unscaled time ถ้าต้อง animate ตอน pause:
+  Time.unscaledDeltaTime   // template pause menu ยังไม่ animate ซับซ้อน
+
+OnDestroy ของ GameplayPauseUI คืน timeScale = 1 — กัน scene ค้าง pause
+
+--------------------------------------------------------------------------------
+3. GameplayPauseService — pause depth (Push / Pop)
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/Core/GameplayPauseService.cs
+
+Static service — ไม่ใช่ MonoBehaviour
+
+  private static int pauseDepth;
+  public static bool IsPaused => pauseDepth > 0;
+
+  PushPause()  → pauseDepth++  → timeScale = 0
+  PopPause()   → pauseDepth--  → timeScale = 1 (ถ้า depth = 0)
+  ForceResume()→ pauseDepth = 0 → timeScale = 1
+
+ทำไม depth?
+  อนาคตมี pause ซ้อน (inventory + system menu) — Pop ครั้งเดียวไม่ resume เร็วเกิน
+
+  OnPauseChanged?.Invoke(IsPaused)  — ระบบอื่นฟังได้ (อนาคต)
+
+Apply():
+
+  Time.timeScale = IsPaused ? 0f : 1f;
+
+--------------------------------------------------------------------------------
+4. GameplayPauseUI — เปิด/ปิด panel + cursor
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/UI/GameplayPauseUI.cs
+อยู่บน PauseMenu prefab ใต้ HUD_Canvas
+
+เปิด pause (Escape หรือปุ่ม Pause มุมซ้ายบน):
+
+  Open():
+    panelRoot.SetActive(true);
+    GameplayPauseService.PushPause();
+    playerController.SetCursorLocked(false);   // โชว์เมาส์กดปุ่ม
+
+ปิด / Resume:
+
+  CloseImmediate():
+    panelRoot.SetActive(false);
+    GameplayPauseService.PopPause();
+    SetCursorLocked(true);   // กลับ FPS look
+
+Restart:
+
+  CloseImmediate();
+  GameSceneFlow.RestartCurrentScene();
+  // ForceResume ภายใน GameSceneFlow → โหลด scene index เดิม
+
+Back to Menu:
+
+  CloseImmediate();
+  if (CampaignSessionState.HasActiveCampaignContext)   // Phase 12
+      MenuFlowState.RequestCampaignLevelList(...);
+  else
+      MenuFlowState.RequestPlaySubPanel();             // Phase 10
+  GameSceneFlow.LoadMainMenu();
+
+  // จำ panel เมนูที่ต้องเปิดเมื่อกลับจาก gameplay
+
+Input ตอน pause:
+  GameplayPauseUI.Update ยังรัน → Escape toggle menu ได้
+  PlayerController.Update return ต้นๆ เมื่อ IsPaused
+
+--------------------------------------------------------------------------------
+5. ระบบที่ถูก gate ตอน pause
+--------------------------------------------------------------------------------
+
+เช็ค GameplayPauseService.IsPaused ใน Update:
+
+  PlayerController        — ไม่รับ WASD / mouse look / ยิง
+  CharacterDamageTester   — ไม่รับ K/H/Y
+  AIController            — ไม่ tick FSM (Phase 7)
+
+หยุดจาก timeScale = 0 (Time.deltaTime / Time.time):
+
+  WeaponHandler.TickReload, pending hitscan damage schedule
+  CharacterBase.TickDelayHealthBar
+
+HUD (DualLayerHealthBar delay) — delay bar หยุดตาม deltaTime ตอน pause
+
+--------------------------------------------------------------------------------
+6. GameSceneFlow — เปลี่ยน scene อย่างปลอดภัย
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/Core/GameSceneFlow.cs
+
+ชื่อ scene คงที่:
+
+  Intro, ProfileSelection, MainMenu, PrototypeGameplay
+
+ทุก Load* เรียก GameplayPauseService.ForceResume() ก่อน LoadScene
+  — กัน timeScale = 0 ค้างหลัง pause แล้วเปลี่ยน scene
+
+  RestartCurrentScene():
+    ForceResume();
+    SceneManager.LoadScene(active.buildIndex);
+
+  LoadMainMenu():
+    ForceResume();
+    SceneManager.LoadScene("MainMenu");
+
+CanLoadScene — ถ้า scene ไม่ใน Build Settings → Debug.LogWarning
+  Phase 10 ใส่ MainMenu ใน build แล้ว Back to Menu ถึงจะ work
+
+--------------------------------------------------------------------------------
+7. Cursor lock — ควบคู่ pause
+--------------------------------------------------------------------------------
+
+Phase 2: PlayerController.SetCursorLocked(true) ตอนเล่น
+Phase 5: pause เปิด → locked = false (เลื่อนเมาส์กด UI)
+         resume → locked = true
+
+GameplayPauseUI หา PlayerController จาก Tag "Player"
+
+--------------------------------------------------------------------------------
+8. Setup Phase 5 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 5 (Pause)
+
+สร้าง/wire:
+  UI/HUD/PauseMenu.prefab → child ของ HUD_Canvas
+  ปุ่ม: Pause (toggle), Resume, Restart, Back to Menu
+  GameplayPauseUI ลาก panelRoot + buttons
+  Build Settings: PrototypeGameplay enabled (ถ้ายังไม่มี)
+
+Pause UI:
+
+  | Control        | การทำงาน                          |
+  |----------------|-----------------------------------|
+  | Pause (ซ้ายบน) | Toggle pause menu                 |
+  | Escape         | Toggle pause menu                 |
+  | Resume         | PopPause + ปิด panel              |
+  | Restart        | Reload scene ปัจจุบัน             |
+  | Back to Menu   | Load MainMenu (+ MenuFlowState)   |
+
+Back to Menu ต้อง Phase 10+ (MainMenu ใน Build Settings)
+
+--------------------------------------------------------------------------------
+9. Data Flow Phase 5 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Playing]
+  Escape / Pause button
+       ▼
+  GameplayPauseUI.Open()
+       ├── PushPause() → timeScale = 0
+       └── cursor unlock
+
+  PlayerController.Update → IsPaused → return
+  WeaponHandler / CharacterBase → deltaTime ≈ 0
+
+  Resume
+       ▼
+  CloseImmediate() → PopPause() → timeScale = 1 → cursor lock
+
+  Restart
+       ▼
+  GameSceneFlow.RestartCurrentScene() → ForceResume → LoadScene(same index)
+
+  Back to Menu
+       ▼
+  MenuFlowState (Play หรือ Campaign panel)
+       ▼
+  GameSceneFlow.LoadMainMenu() → ForceResume → LoadScene MainMenu
+
+--------------------------------------------------------------------------------
+10. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 5:
+  - Scene Management (LoadScene, build index)
+  - Time.timeScale concept
+  - UI Buttons + onClick
+
+Unity Learn อาจสอน pause แบบ Time.timeScale ตรงๆ — template ห่อด้วย GameplayPauseService
+
+--------------------------------------------------------------------------------
+11. ทดสอบว่า Phase 5 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 5 สำเร็จ
+[ ] Play → Escape → เมนู pause แสดง, cursor ปลด, delay HP / reload หยุด
+[ ] Resume → เล่นต่อ, cursor lock, timeScale = 1
+[ ] Restart → scene โหลดใหม่, spawn กลับต้น, ไม่ค้าง pause
+[ ] Back to Menu → โหลด MainMenu (หลัง Phase 10) หรือ warning ถ้ายังไม่มี scene
+[ ] กด K ตอน pause → HP ไม่เปลี่ยน (CharacterDamageTester gated)
+[ ] เปิด pause ซ้ำ Escape → ปิด (toggle)
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 5
+
+--------------------------------------------------------------------------------
+12. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด AI = ผ่าน Phase 5)
+--------------------------------------------------------------------------------
+
+1) timeScale = 0 แล้ว Update() ยังทำงานไหม? Input ล่ะ?
+2) PushPause กับ PopPause ใช้เมื่อไหร?
+3) ทำไม LoadMainMenu ต้อง ForceResume ก่อน?
+4) PlayerController หยุด input ด้วยกลไกอะไร 2 อย่าง?
+5) Restart กับ Back to Menu ต่างกันอย่างไร?
+6) pauseDepth > 1 เกิดได้เมื่อไหร (แนวคิด)?
+7) MenuFlowState.RequestPlaySubPanel ใช้เมื่อไหร?
+8) ทำไม OnDestroy ของ GameplayPauseUI ตั้ง timeScale = 1?
+
+--------------------------------------------------------------------------------
+13. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 6 ใน DocCode ด้านล่าง (IDamageable, HitRegistry polish)
+→ template/Plan/UnitySetup.md Phase 6
+→ copy Scripts ใหม่ + recompile (ไม่มี Editor menu แยก)
+
+================================================================================
+PHASE 6 — ต้องรู้: IDamageable, HitRegistry, กฎ Damage กลาง
+================================================================================
+
+เป้าหมาย Phase 6
+  เมื่อจบ Phase 6 คุณต้องอธิบายได้ว่า:
+  - interface IDamageable แก้ปัญหาอะไร (ทำไมไม่ GetComponent<Player>)
+  - HitRegistry รวมกฎ hitscan/melee ไว้ที่เดียวอย่างไร
+  - penetration, delay, friendly fire, obstacle ทำงานตาม Plantext อย่างไร
+  - melee swingId กัน double-hit อย่างไร
+  - Phase 6 ไม่มี Editor menu — ต้องทำอะไรใน Unity
+
+Prerequisites: Phase 3 ผ่าน (WeaponHandler, TestDummy, Layer Hitbox)
+
+หมายเหตุ: Phase 3 กับ Phase 6 ใน timeline โปรเจกต์ — code ปัจจุบันรวม HitRegistry แล้ว
+Phase 6 คือ "polish/refactor" ให้ครบ spec — copy Scripts ใหม่แล้ว recompile
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 6 แก้ — logic ยิง/ฟันกระจาย แก้ยาก
+--------------------------------------------------------------------------------
+
+ก่อนรวม HitRegistry (แนวคิด):
+  WeaponHandler อาจ raycast + TakeDamage เอง → กฎซ้ำเมื่อ AI ยิง, ปืนใหม่, melee
+
+หลัง Phase 6:
+  ทุก damage จากอาวุธผ่าน HitRegistry (หรือ interface เดียว)
+  CharacterBase implements IDamageable — Player, Enemy, TestDummy ใช้ path เดียว
+
+อนาคต: destructible wall implements IDamageable โดยไม่สืบ CharacterBase
+
+--------------------------------------------------------------------------------
+2. IDamageable — สัญญาว่า "รับ damage ได้"
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/Core/IDamageable.cs
+
+  public interface IDamageable
+  {
+      bool IsAlive { get; }
+      Faction Faction { get; }
+      void TakeDamage(float amount);
+  }
+
+CharacterBase : MonoBehaviour, IDamageable
+  — IsAlive, Faction, TakeDamage มีอยู่แล้วจาก Phase 1
+
+ทำไม interface?
+  WeaponHandler / HitRegistry ไม่รู้ว่าเป้าหมายเป็น Player หรือ Enemy
+  แค่เช็ค IsAlive, Faction hostile, แล้ว TakeDamage
+
+  // ไม่ทำแบบนี้:
+  var player = hit.collider.GetComponent<PlayerController>();
+
+  // ทำแบบนี้:
+  if (HitRegistry.TryGetDamageable(collider, out IDamageable target))
+      HitRegistry.TryApplyDamage(target, damage, instigator);
+
+TryGetDamageable — หา CharacterBase ใน parent ของ collider ที่โดน ray/trigger
+
+--------------------------------------------------------------------------------
+3. HitRegistry — static class กฎกลาง (ไม่ใช่ MonoBehaviour)
+--------------------------------------------------------------------------------
+
+ไฟล์: template/Scripts/Weapons/HitRegistry.cs
+
+ไม่มี GameObject ในฉาก — เรียก HitRegistry.Method() จาก WeaponHandler / MeleeHitbox
+
+หน้าที่หลัก:
+
+  | Method                    | ใช้เมื่อ                          |
+  |---------------------------|-----------------------------------|
+  | CalculateHitscanDelay     | คำนวณ delay ตามระยะ               |
+  | ResolveHitscanRay         | raycast เรียงระยะ → รายการ unit  |
+  | TryApplyDamage            | ใส่ damage + เช็ค friendly        |
+  | TryApplyMeleeHit          | melee + anti-double per swingId   |
+  | TryGetDamageable          | collider → IDamageable            |
+  | ReleaseMeleeSwing         | ล้าง HashSet เมื่อ hitbox ถูกลบ   |
+
+--------------------------------------------------------------------------------
+4. Hitscan — ResolveHitscanRay + delay + penetration
+--------------------------------------------------------------------------------
+
+WeaponHandler.FireHitscan:
+
+  1) HitRegistry.ResolveHitscanRay(origin, dir, data, owner, hitMask, buffer, ...)
+  2) แต่ละ unit ใน buffer → delay = CalculateHitscanDelay(data, distance)
+  3) ScheduleHitscanDamage → รอ Time.time + delay
+  4) TickPendingHits → HitRegistry.TryApplyDamage(target, damage, owner)
+
+CalculateHitscanDelay (Plantext §4):
+
+  delay = baseHitDelay;
+  if (distance > referenceRangeMeters)
+      delay += ((distance - reference) / 100f) * extraDelayPer100m;
+
+ResolveHitscanRay — Physics.RaycastAll เรียงตาม distance:
+
+  unitsRemaining = penetration + 1    // penetration=0 → โดน 1 unit
+
+  แต่ละ hit:
+    - collider ของตัวยิง (owner child) → ข้าม
+    - IDamageable hostile + alive → ใส่ unitHits, unitsRemaining--
+    - friendly / dead → ข้าม (ไม่กิน penetration)
+    - non-trigger obstacle (ไม่ใช่ unit) → bullet hole, หยุด ray
+
+  penetration=0: โดน hostile unit ตัวแรกแล้ว return (ไม่ทะลุ)
+  penetration=1: ทะลุได้ 2 units สูงสุด
+
+TryApplyDamage — ชั้นสุดท้ายก่อน TakeDamage:
+
+  if (!target.IsAlive) return false;
+  if (instigator hostile check fail) return false;   // ไม่ยิงเพื่อน
+  target.TakeDamage(amount);
+
+--------------------------------------------------------------------------------
+5. Melee — swingId + HashSet กัน double-hit
+--------------------------------------------------------------------------------
+
+MeleeHitbox (Phase 3) → HitRegistry.TryApplyMeleeHit(swingId, target, damage, owner)
+
+  MeleeHitsBySwing[swingId] = HashSet<IDamageable>
+
+  if (!hitSet.Add(target)) return false;   // โดน target นี้ใน swing นี้แล้ว
+
+  return TryApplyDamage(...);
+
+WeaponHandler.StartMelee: meleeSwingSequence++ → swingId ใหม่ทุก swing
+
+Destroy(hitboxGo, activeTime) → MeleeHitbox.OnDestroy → ReleaseMeleeSwing(swingId)
+
+Layer Hitbox (Phase 0) — melee trigger แยกจาก body collider
+
+Rigidbody kinematic บน hitbox — trigger ทำงานกับ CharacterController
+
+--------------------------------------------------------------------------------
+6. ความสัมพันธ์ WeaponHandler ↔ HitRegistry
+--------------------------------------------------------------------------------
+
+Phase 3 สร้าง WeaponHandler — Phase 6 ย้ายกฎ ray/melee/friendly ไป HitRegistry
+
+WeaponHandler ยัง负责:
+  - ammo, reload, slot, TryPrimaryAction
+  - FireHitscan / StartMelee orchestration
+  - pendingHits list + TickPendingHits (delay queue)
+  - SpawnBulletHole
+
+HitRegistry 负责:
+  - กฎใครโดนได้ / กี่ตัว / delay formula / melee dedupe
+
+แยกชั้น: Handler = "เมื่อไหร่ยิง" | Registry = "โดนแล้วเกิดอะไร"
+
+--------------------------------------------------------------------------------
+7. Phase 6 ใน Unity — ไม่มีเมนู Setup
+--------------------------------------------------------------------------------
+
+ขั้นตอน:
+  1) Copy template/Scripts/ ล่าสุด → Assets/FPSGame/Scripts/
+  2) รอ Unity recompile — Console ไม่มี error
+  3) ไม่มี asset/prefab ใหม่
+  4) ทดสอบ gameplay เดิม (Phase 3 tests ยังใช้ได้)
+
+ถ้า code เก่าใน Unity ไม่มี IDamageable / HitRegistry:
+  อัปเดต Scripts แล้ว Play — พฤติกรรมควรเหมือนเดิม แต่ architecture ชัดขึ้น
+
+--------------------------------------------------------------------------------
+8. Data Flow Phase 6 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Hitscan]
+  LMB → WeaponHandler.FireHitscan
+       → HitRegistry.ResolveHitscanRay → unitHits[]
+       → CalculateHitscanDelay ต่อ target
+       → pendingHits (Time.time + delay)
+       → TickPendingHits
+       → HitRegistry.TryApplyDamage
+       → IDamageable.TakeDamage
+       → CharacterBase → OnHealthChanged → HUD
+
+  [Melee]
+  LMB → StartMelee → MeleeHitbox trigger
+       → HitRegistry.TryApplyMeleeHit(swingId, ...)
+       → TryApplyDamage → TakeDamage
+
+  [Friendly fire block]
+  instigator.IsHostileTo(unit) == false → ข้ามใน Resolve / TryApplyDamage
+
+--------------------------------------------------------------------------------
+9. เรียนเพิ่มจาก Unity Learn / C#
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 6:
+  - C# interfaces — สัญญา method/property ไม่ใช่ inheritance
+  - Physics.RaycastAll, RaycastHit.distance sort
+  - LayerMask, QueryTriggerInteraction.Ignore
+  - HashSet — เก็บ unique items (melee per swing)
+
+Unity Learn อาจสอนยิงแล้ว TakeDamage ทันที — template แยก delay + registry
+
+--------------------------------------------------------------------------------
+10. ทดสอบว่า Phase 6 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] Scripts อัปเดต + compile ไม่ error
+[ ] ยิง TestDummy → HP ลดหลัง delay เล็กน้อย (ใกล้ = เร็ว)
+[ ] ยิงผนัง → bullet hole, ไม่ damage dummy ข้างหลัง (penetration=0)
+[ ] Knife → dummy โดน 1 ครั้งต่อ swing (ไม่ double จาก trigger stay)
+[ ] ยิงไม่โดนตัวเอง (owner collider ถูกข้าม)
+[ ] (optional) สร้าง Hitscan penetration=1 → ทะลุ 2 dummy เรียง
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 6
+
+--------------------------------------------------------------------------------
+11. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด AI = ผ่าน Phase 6)
+--------------------------------------------------------------------------------
+
+1) interface ต่างจาก class สืบทอดอย่างไร — ยก IDamageable
+2) TryGetDamageable หา component จาก collider อย่างไร?
+3) penetration=0 กับ penetration=1 โดน unit ได้กี่ตัว?
+4) friendly unit ถูก ray ผ่าน — กิน penetration slot ไหม?
+5) obstacle กับ unit ใน ray — bullet hole เกิดเมื่อไหร?
+6) swingId ใช้กัน double-hit melee อย่างไร?
+7) ทำไม delay damage ไม่ใส่ใน HitRegistry แต่อยู่ WeaponHandler pendingHits?
+8) Phase 6 ทำไมไม่มี FPSGame → Setup menu?
+
+--------------------------------------------------------------------------------
+12. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 7 ใน DocCode ด้านล่าง (AI, NavMesh, FSM, AiPerception)
+→ template/Plan/UnitySetup.md Phase 7
+→ รัน FPSGame → Setup Phase 7 (AI Enemy)
+
+================================================================================
+PHASE 7 — ต้องรู้: AI FSM, NavMesh, Perception, Composition
+================================================================================
+
+เป้าหมาย Phase 7
+  เมื่อจบ Phase 7 คุณต้องอธิบายได้ว่า:
+  - FSM Patrol → Chase → Attack เปลี่ยน state เมื่อไหร
+  - NavMeshAgent กับ Ground bake ทำงานร่วมกันอย่างไร
+  - AiPerception มองเห็น / ได้ยิน ผู้เล่นอย่างไร
+  - AIController กับ PlayerController ต่างกันแต่ใช้ CharacterBase + WeaponHandler ร่วม
+  - Enemy ยิงผู้เล่นผ่าน HitRegistry path เดียวกับ Phase 6
+  - PlayerNoiseEmitter บน Player ใช้กับ hearing อย่างไร
+
+Prerequisites: Phase 3 (อาวุธ), Phase 5 (pause gate AI), Phase 6 (HitRegistry)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 7 แก้ — TestDummy นิ่ง ต้องมีศัตรูที่ตอบสนอง
+--------------------------------------------------------------------------------
+
+Phase 3 TestDummy — รับ damage อยู่กับที่
+Phase 7 Enemy_AI:
+  - ลาดตระเวน (Patrol)
+  - เห็น / ได้ยินผู้เล่น → ไล่ (Chase)
+  - เข้าระยะ → ยิงหรือมีด (Attack)
+  - ใช้ WeaponHandler + HitRegistry เหมือนผู้เล่น
+
+Composition (เหมือน Phase 2):
+
+  GameObject "Enemy_AI"
+  ├── CharacterBase      ← HP, Enemy_Default.asset, faction Enemy
+  ├── NavMeshAgent       ← pathfinding
+  ├── AiPerception       ← sight + hearing
+  ├── AIController       ← FSM (แทน PlayerController)
+  └── WeaponMount
+      └── WeaponHandler  ← pistol slot 0, knife slot 1
+
+ไม่มี class Enemy : CharacterBase — ใช้ component คู่กันบน prefab
+
+--------------------------------------------------------------------------------
+2. NavMesh — พื้นที่เดินที่ AI ใช้ได้
+--------------------------------------------------------------------------------
+
+NavMesh = mesh ที่ bake จาก geometry walkable (Ground plane)
+NavMeshAgent = component บน Enemy — หา path, SetDestination, หลบสิ่งกีดขวาง
+
+  agent.SetDestination(target.position);
+  agent.isStopped = true;    // หยุดตอน Attack
+  agent.speed = character.Stats.walkSpeed;
+
+Phase 7 Setup bake NavMesh อัตโนมัติบน Ground
+ถ้า Enemy ไม่เดิน: ตรวจ NavMesh baked, agent.isOnNavMesh
+
+Ground ต้องมี Collider + อยู่ใน bake settings
+Agent ไม่ใช้ CharacterController — Unity AI ใช้ NavMeshAgent แยก
+
+Player ใช้ CharacterController — Enemy ใช้ NavMeshAgent (คนละระบบ movement)
+
+--------------------------------------------------------------------------------
+3. FSM — AiState Patrol, Chase, Attack
+--------------------------------------------------------------------------------
+
+ไฟล์: AI/AiState.cs — enum 3 state
+
+AIController.Update (หลัง perception.Tick):
+
+  switch (state)
+  {
+      case Patrol:  TickPatrol();  break;
+      case Chase:   TickChase();   break;
+      case Attack:  TickAttack();  break;
+  }
+
+Patrol:
+  - วน patrolPoints[] — SetDestination → รอ patrolWaitSeconds → จุดถัดไป
+  - HasPerceivedTarget() → TransitionTo(Chase)
+
+Chase:
+  - SetDestination(perception.CurrentTarget.position)
+  - ระยะ <= GetPreferredAttackRange() → Attack
+  - ไม่มี target → กลับ Patrol
+
+Attack:
+  - agent.isStopped = true, FaceTarget (หมุนหา target)
+  - SelectWeaponForDistance — ใกล้ = melee slot, ไกล = ranged slot
+  - weaponHandler.TryPrimaryAction() — ยิง/ฟัน (HitRegistry path)
+  - ไกลเกิน attackRange * 1.15 → Chase
+
+TransitionTo — reset patrolWaitTimer, เปลี่ยน state
+
+OnDied (CharacterBase.OnDied):
+  agent.isStopped = true; enabled = false;
+
+ตัวอย่างจาก AIController.cs:
+
+  private void TickChase()
+  {
+      agent.isStopped = false;
+      if (!HasPerceivedTarget()) { TransitionTo(AiState.Patrol); return; }
+      var target = perception.CurrentTarget;
+      if (Vector3.Distance(transform.position, target.transform.position)
+          <= GetPreferredAttackRange())
+      {
+          TransitionTo(AiState.Attack);
+          return;
+      }
+      agent.SetDestination(target.transform.position);
+  }
+
+Pause gate (Phase 5):
+
+  if (character == null || !character.IsAlive || GameplayPauseService.IsPaused)
+      return;
+
+--------------------------------------------------------------------------------
+4. AiPerception — Sight, Hearing, Memory
+--------------------------------------------------------------------------------
+
+ไฟล์: AI/AiPerception.cs + AiPerceptionConfig.asset (SO)
+
+Config ตัวอย่าง (EnemyPerception_Default):
+  sightRange = 25, fieldOfViewDegrees = 110
+  hearingRange = 18, gunshotMemorySeconds = 1.5
+  loseTargetDelay = 2.5
+  lineOfSightMask — layer ที่ ray LOS ชนได้
+
+Tick() ทุก frame (จาก AIController):
+
+  TryAcquireTarget → ตั้ง currentTarget
+  ถ้ามี target แต่ไม่เห็น/ไม่ได้ยินนาน → lostTargetTimer → ClearTarget
+
+CanSee (Sight):
+  1) owner.IsHostileTo(target)
+  2) ระยะ <= sightRange
+  3) มุมใน FOV (horizontal — flatForward vs flatToTarget)
+  4) Physics.Raycast จาก eyePoint — โดน collider ของ target จริง (ไม่มีกำแพงบัง)
+
+CanHear (Hearing):
+  1) hostile + ระยะ <= hearingRange
+  2) PlayerNoiseEmitter.IsSprinting(player) — Shift วิ่ง
+  3) หรือ Time.time - GetLastGunshotTime(player) <= gunshotMemorySeconds
+
+PlayerNoiseEmitter (บน Player — Phase 7 Setup เพิ่ม):
+  PlayerController sprint → SetSprinting(true/false)
+  WeaponHandler ยิง → RegisterGunshot(player.gameObject)
+
+หา Player: GameObject.FindGameObjectWithTag("Player") + CharacterBase
+
+ตัวอย่าง CanSee (ย่อ):
+
+  float angle = Vector3.Angle(flatForward, flatToTarget);
+  if (angle > halfFov) return false;
+  if (Physics.Raycast(origin, toTarget.normalized, out hit, distance, mask))
+      return hit.collider.GetComponentInParent<CharacterBase>() == target;
+
+--------------------------------------------------------------------------------
+5. Enemy โจมตี — WeaponHandler + HitRegistry เหมือนผู้เล่น
+--------------------------------------------------------------------------------
+
+Enemy WeaponHandler slots (Phase 7 Setup):
+  [0] pistol (rangedWeaponSlot)
+  [1] knife (meleeWeaponSlot)
+
+TickAttack:
+  SelectWeaponForDistance(distance)
+  weaponHandler.TryPrimaryAction()
+
+Damage ไป Player:
+  FireHitscan / Melee → HitRegistry → IDamageable (Player CharacterBase)
+  instigator = Enemy CharacterBase — friendly check ไม่ยิงศัตรูด้วยกัน
+
+ผู้เล่นยิง → RegisterGunshot บน Player → AI ได้ยิน (CanHear)
+เสียงยิงของ Enemy เองไม่ทำให้ AI “ได้ยิน” Player — ระบบ hearing ดู noise จาก target
+
+--------------------------------------------------------------------------------
+6. Patrol points — ConfigurePatrol
+--------------------------------------------------------------------------------
+
+Phase 7 scene: PatrolPoint_A, PatrolPoint_B (empty Transforms)
+AIController.patrolPoints[] — ลากใน Inspector หรือ ConfigurePatrol จาก spawn (Phase 8)
+
+ConfigurePatrol(Transform[] points):
+  reset index, SetDestination จุดแรก
+
+Phase 8 spawn เรียก ConfigurePatrol หลัง Instantiate + NavMeshAgent.Warp
+
+--------------------------------------------------------------------------------
+7. Setup Phase 7 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 7 (AI Enemy)
+
+สร้าง/wire:
+  Data/AI/EnemyPerception_Default.asset
+  Prefabs/Enemy/Enemy_AI.prefab
+  PatrolPoint_A/B ใน PrototypeGameplay
+  NavMesh bake บน Ground
+  PlayerNoiseEmitter บน Player.prefab
+  ลบ TestDummy_Enemy จาก scene (แทนด้วย Enemy_AI)
+
+Enemy prefab components:
+
+  | Component      | หมายเหตุ                               |
+  |----------------|-----------------------------------------|
+  | CharacterBase  | Enemy_Default.asset, faction Enemy      |
+  | NavMeshAgent   | speed จาก stats                         |
+  | AiPerception   | config SO, eyePoint, targetTag Player   |
+  | AIController   | patrolPoints, attackRange, weapon slots |
+  | WeaponHandler  | pistol + knife                          |
+
+Scripts ที่เพิ่มใน vault Phase 7:
+  AI/AIController.cs, AI/AiPerception.cs, AI/AiPerceptionConfig.cs
+  AI/AiState.cs, Core/PlayerNoiseEmitter.cs
+  Editor/FPSGamePhase7Setup.cs
+
+--------------------------------------------------------------------------------
+8. Data Flow Phase 7 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Perception loop]
+  AIController.Update
+       → AiPerception.Tick()
+            → CanSee / CanHear Player
+            → currentTarget + lastKnownPosition
+
+  [FSM]
+  HasTarget → Chase → SetDestination(player)
+  in range → Attack → FaceTarget + TryPrimaryAction
+
+  [Combat]
+  Enemy WeaponHandler → HitRegistry → Player IDamageable → HUD
+
+  [Noise]
+  Player sprint/shoot → PlayerNoiseEmitter
+       → AiPerception.CanHear → Chase แม้อยู่นอก FOV
+
+  [Pause]
+  GameplayPauseService.IsPaused → AIController return ต้น Update
+
+--------------------------------------------------------------------------------
+9. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 7:
+  - NavMesh baking + NavMeshAgent
+  - Finite State Machine (concept)
+  - Physics.Raycast for line-of-sight
+
+Unity Learn AI tutorials — template FSM เรียบง่าย 3 state ไม่ใช้ Behaviour Tree
+
+--------------------------------------------------------------------------------
+10. ทดสอบว่า Phase 7 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 7 สำเร็จ + NavMesh baked
+[ ] Play → Enemy วน patrol A ↔ B
+[ ] เดินเข้า FOV → Chase
+[ ] Shift sprint ใกล้ (นอก FOV) → ได้ยิน → Chase
+[ ] ยิงปืน → AI ได้ยิน → Chase (ภายใน gunshotMemorySeconds)
+[ ] เข้าระยะ → Enemy ยิงกลับ — Player HP ลด
+[ ] ใกล้มาก → Enemy สลับมีด (melee slot)
+[ ] ฆ่า Enemy → หยุดเคลื่อนไหว (OnDied)
+[ ] Pause → Enemy หยุด tick FSM
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 7
+
+--------------------------------------------------------------------------------
+11. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด AI = ผ่าน Phase 7)
+--------------------------------------------------------------------------------
+
+1) AIController กับ PlayerController ต่างหน้าที่อย่างไร — ใช้ร่วมอะไร?
+2) Patrol → Chase เกิดเมื่อไหร?
+3) CanSee ต้องผ่านเงื่อนไขอะไรบ้าง (อย่างน้อย 4 ข้อ)?
+4) ได้ยินผู้เล่นได้จากอะไร 2 อย่าง?
+5) ทำไม Attack ตั้ง agent.isStopped = true?
+6) rangedWeaponSlot กับ meleeWeaponSlot default ใน template?
+7) loseTargetDelay ทำอะไร?
+8) Enemy ยิง Player ผ่าน class ไหนเหมือนผู้เล่นยิง TestDummy?
+
+--------------------------------------------------------------------------------
+12. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 8 ใน DocCode ด้านล่าง (Spawn, Wave SO, Trigger)
+→ template/Plan/UnitySetup.md Phase 8
+→ รัน FPSGame → Setup Phase 8 (Spawn System)
+
+================================================================================
+PHASE 8 — ต้องรู้: Spawn Trigger, Wave SO, Instantiate, Patrol หลัง Spawn
+================================================================================
+
+เป้าหมาย Phase 8
+  เมื่อจบ Phase 8 คุณต้องอธิบายได้ว่า:
+  - ทำไม Phase 8 เริ่มฉากไม่มีศัตรู — spawn ตาม event แทน
+  - OnTriggerEnter + CompareTag("Player") ทำงานอย่างไร
+  - EnemyWaveSequence (SO) กับ EnemySpawnStep ต่างจาก prefab ใน scene อย่างไร
+  - EnemySpawnPoint coroutine spawn ทีละ step / count / delay
+  - Instantiate + NavMeshAgent.Warp + ConfigurePatrol หลัง spawn
+  - triggerOnce / runOncePerSpawnPoint กัน spawn ซ้ำอย่างไร
+
+Prerequisites: Phase 7 (`Enemy_AI.prefab`, NavMesh baked)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 8 แก้ — Enemy วางใน scene ตั้งแต่ต้น
+--------------------------------------------------------------------------------
+
+Phase 7: Enemy_AI อยู่ใน scene ตลอด — เหมาะทดสอบ AI แต่ไม่เหมือนเกมจริง
+Phase 8: ฉากเริ่มว่าง → ผู้เล่นเข้าโซน trigger → spawn wave ตาม SO
+
+ข้อดี:
+  - ควบคุม pacing (delay ระหว่างศัตรู)
+  - ใช้ wave asset เดียวกันหลาย spawn point
+  - แยก "ที่ spawn" กับ "เมื่อไหร่ spawn" ชัดเจน
+
+Phase 8 Setup ลบจาก scene:
+  Enemy_AI, TestDummy_Enemy, PatrolPoints (root เก่า Phase 7)
+แทนด้วย SpawnPoint_01 + SpawnTrigger_01
+
+--------------------------------------------------------------------------------
+2. องค์ประกอบ Phase 8 — ใครทำอะไร
+--------------------------------------------------------------------------------
+
+  SpawnTrigger_01 (EnemySpawnTrigger)
+       │  OnTriggerEnter(Player)
+       ▼
+  SpawnPoint_01 (EnemySpawnPoint)
+       │  BeginSpawn() → coroutine
+       ▼
+  Wave_Prototype_01.asset (EnemyWaveSequence SO)
+       │  steps[]: prefab + count + delayAfterPrevious
+       ▼
+  Instantiate(Enemy_AI) @ spawn point position
+       → NavMeshAgent.Warp (SamplePosition)
+       → AIController.ConfigurePatrol(child PatrolPoints)
+
+ไฟล์ใน vault:
+  AI/EnemySpawnTrigger.cs   — trigger zone → เรียก spawn points
+  AI/EnemySpawnPoint.cs     — coroutine spawn + patrol wiring
+  AI/EnemyWaveSequence.cs   — ScriptableObject ลำดับ wave
+  AI/EnemySpawnStep.cs      — struct ต่อ step (prefab, count, delay)
+  AI/AIController.cs        — ConfigurePatrol() (เพิ่ม Phase 7, ใช้ Phase 8)
+  Editor/FPSGamePhase8Setup.cs
+
+--------------------------------------------------------------------------------
+3. EnemySpawnTrigger — Trigger volume
+--------------------------------------------------------------------------------
+
+[RequireComponent(typeof(Collider))] — Awake บังคับ col.isTrigger = true
+
+OnTriggerEnter(Collider other):
+  1) triggerOnce && hasTriggered → return (spawn ครั้งเดียว)
+  2) !other.CompareTag("Player") → return
+  3) hasTriggered = true → ActivateSpawnPoints()
+
+ActivateSpawnPoints — loop spawnPoints[] → BeginSpawn() แต่ละจุด
+
+Phase 8 scene: SpawnTrigger_01 @ (4, 1, 4), BoxCollider 8×3×8
+Gizmo สีส้มใน Scene view — โซนที่ต้องเดินเข้า
+
+ตัวอย่าง:
+
+  private void OnTriggerEnter(Collider other)
+  {
+      if (triggerOnce && hasTriggered) return;
+      if (!other.CompareTag("Player")) return;
+      hasTriggered = true;
+      ActivateSpawnPoints();
+  }
+
+Player ต้องมี Tag "Player" + Collider (CharacterController นับ)
+Trigger ต้องมี Rigidbody หรือ kinematic ตามกฎ Unity — Setup ใช้ static trigger + Player เคลื่อนเข้า
+
+--------------------------------------------------------------------------------
+4. EnemyWaveSequence + EnemySpawnStep — ข้อมูล wave แยกจาก scene
+--------------------------------------------------------------------------------
+
+ScriptableObject — สร้าง asset ใน Project, แชร์หลาย spawn point ได้
+
+EnemySpawnStep (struct, Serializable):
+  enemyPrefab   — prefab ที่จะ Instantiate
+  count         — จำนวนต่อ step (Min 1)
+  delayAfterPrevious — วินาทีรอก่อน step นี้ (step แรก = 0)
+
+EnemyWaveSequence:
+  steps[] — ลำดับ step
+  runOncePerSpawnPoint — spawn point รัน sequence นี้ครั้งเดียว
+
+Wave_Prototype_01 (Setup สร้าง):
+  Step 0: Enemy_AI × 1, delay 0
+  Step 1: Enemy_AI × 1, delay 2s  ← ศัตรูตัวที่สองหลัง 2 วินาที
+
+ทำไม SO ไม่ hardcode ใน scene:
+  - แก้ wave ใน Inspector โดยไม่แตะ prefab/scene logic
+  - level designer สลับ asset ได้ (Wave_Easy, Wave_Boss)
+  - หลาย SpawnPoint ใช้ wave เดียวกัน
+
+--------------------------------------------------------------------------------
+5. EnemySpawnPoint — Coroutine spawn
+--------------------------------------------------------------------------------
+
+BeginSpawn():
+  - sequence null / steps ว่าง → warning, return
+  - runOncePerSpawnPoint && hasRun → return
+  - isSpawning → return (กันเรียกซ้อน)
+  - StartCoroutine(SpawnRoutine())
+
+SpawnRoutine (สรุปลำดับ):
+  for แต่ละ step i:
+    if i > 0 && delayAfterPrevious > 0 → WaitForSeconds(delay)
+    for c = 0 .. count-1:
+      SpawnEnemy(prefab, patrolPoints)
+      ระหว่าง count ใน step เดียว → ห่าง 0.25s
+
+  hasRun = true; isSpawning = false
+
+SpawnEnemy:
+  Instantiate(prefab, spawnPos, spawnRot)
+  NavMeshAgent → NavMesh.SamplePosition + Warp (radius 3) — ให้อยู่บน NavMesh
+  AIController.ConfigurePatrol(points) — วน patrol รอบจุดลูก
+
+Patrol points — ResolvePatrolPoints():
+  default useChildPatrolPoints = true
+  หา child ชื่อขึ้นต้น "PatrolPoint" (PatrolPoint_A, PatrolPoint_B)
+  EnemySpawnPoint prefab มีลูก 2 จุด — ศัตรูที่ spawn วนรอบ spawn point นั้น
+
+ConfigurePatrol (AIController):
+
+  public void ConfigurePatrol(Transform[] points)
+  {
+      patrolPoints = points;
+      patrolIndex = 0;
+      if (agent.isOnNavMesh && points.Length > 0)
+          agent.SetDestination(points[0].position);
+  }
+
+Spawn ที่ (8, 0, 8) — ไกลจาก trigger (4, 1, 4) เล็กน้อย ศัตรู patrol ก่อนเห็นผู้เล่น
+
+--------------------------------------------------------------------------------
+6. ความต่าง Phase 7 vs Phase 8 (patrol)
+--------------------------------------------------------------------------------
+
+Phase 7: patrolPoints ใน scene (PatrolPoint_A/B แยก root)
+Phase 8: patrol เป็น child ของ SpawnPoint — ย้าย spawn point = ย้าย patrol ด้วย
+
+Enemy ที่ spawn ไม่มี patrol ใน prefab — ConfigurePatrol ใส่หลัง Instantiate
+ถ้าไม่มี patrol points → AI ยังทำงาน แต่ TickPatrol หยุด (isStopped)
+
+--------------------------------------------------------------------------------
+7. Setup Phase 8 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 8 (Spawn System)
+(ต้องมี Enemy_AI.prefab จาก Phase 7 — ไม่มีจะ dialog ให้รัน Phase 7 ก่อน)
+
+สร้าง/wire:
+  Data/AI/Wave_Prototype_01.asset
+  Prefabs/Enemy/EnemySpawnPoint.prefab (+ PatrolPoint_A/B children)
+  Scene SpawnPoint_01 @ (8, 0, 8) + assign wave SO
+  Scene SpawnTrigger_01 @ (4, 1, 4) → spawnPoints[0] = SpawnPoint_01
+  NavMesh re-bake
+  ลบ Enemy_AI / TestDummy / PatrolPoints เก่า
+
+Inspector สำคัญ:
+
+  | Object            | Field              | ค่า Phase 8 prototype      |
+  |-------------------|--------------------|----------------------------|
+  | SpawnTrigger_01   | triggerOnce        | true                       |
+  | SpawnTrigger_01   | spawnPoints        | SpawnPoint_01              |
+  | SpawnPoint_01     | sequence           | Wave_Prototype_01          |
+  | SpawnPoint_01     | useChildPatrolPoints | true                     |
+  | Wave asset        | steps              | 2× Enemy_AI, delay 2s      |
+  | Wave asset        | runOncePerSpawnPoint | true                     |
+
+--------------------------------------------------------------------------------
+8. Data Flow Phase 8 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Scene start]
+  ไม่มี Enemy ใน Hierarchy — Player spawn ปกติ
+
+  [Player movement]
+  Player (Tag Player) เข้า BoxCollider trigger
+       → EnemySpawnTrigger.OnTriggerEnter
+       → spawnPoints[i].BeginSpawn()
+
+  [Spawn coroutine]
+  EnemyWaveSequence.steps
+       → WaitForSeconds (delay ระหว่าง step)
+       → Instantiate(Enemy_AI)
+       → NavMeshAgent.Warp
+       → AIController.ConfigurePatrol(PatrolPoint_*)
+
+  [After spawn — Phase 7 AI ทำงานต่อ]
+  AiPerception → FSM → WeaponHandler → HitRegistry → Player
+
+  [Guards]
+  triggerOnce → ไม่ spawn ซ้ำเมื่อเดินเข้าโซนอีก
+  runOncePerSpawnPoint → spawn point ไม่รัน wave ซ้ำ
+  isSpawning → กัน BeginSpawn ซ้อนระหว่าง coroutine
+
+  [Pause — Phase 5]
+  timeScale = 0 → WaitForSeconds ใน coroutine หยุดด้วย
+  AI ที่ spawn แล้ว → GameplayPauseService.IsPaused หยุด Update
+
+--------------------------------------------------------------------------------
+9. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 8:
+  - Instantiate prefabs at runtime
+  - Triggers (OnTriggerEnter, isTrigger)
+  - Coroutines (IEnumerator, WaitForSeconds)
+  - ScriptableObject (data assets)
+
+Unity Learn: Physics triggers, Prefabs instantiation
+
+--------------------------------------------------------------------------------
+10. ทดสอบว่า Phase 8 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 8 สำเร็จ (Phase 7 ทำแล้ว)
+[ ] Play → Hierarchy ไม่มี Enemy_AI ตอนเริ่ม
+[ ] เดินเข้าโซน trigger (~ x=4, z=4) → spawn ศัตรูตัวที่ 1
+[ ] ~2 วินาที → spawn ตัวที่ 2
+[ ] Enemy วน patrol รอบ PatrolPoint ลูกของ SpawnPoint_01
+[ ] เข้า FOV / ยิง → Chase / Attack ตาม Phase 7
+[ ] ออกจาก trigger เข้าใหม่ → ไม่ spawn ซ้ำ (triggerOnce)
+[ ] Pause ระหว่าง spawn → delay หยุด (timeScale)
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 8
+
+--------------------------------------------------------------------------------
+11. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด spawn = ผ่าน Phase 8)
+--------------------------------------------------------------------------------
+
+1) Phase 8 ลบอะไรจาก scene Phase 7 — แล้วแทนด้วยอะไร?
+2) EnemySpawnTrigger เรียก spawn อย่างไร — เงื่อนไข Player?
+3) delayAfterPrevious ใช้กับ step ไหน — step แรก delay เท่าไรใน Wave_Prototype_01?
+4) หลัง Instantiate ทำ 2 อย่างอะไรกับ Enemy?
+5) PatrolPoint มาจากไหนใน Phase 8 — ต่าง Phase 7 อย่างไร?
+6) triggerOnce กับ runOncePerSpawnPoint ต่างกันอย่างไร?
+7) ทำไมต้อง NavMeshAgent.Warp หลัง spawn?
+8) ถ้า sequence.steps ว่าง — BeginSpawn ทำอะไร?
+
+--------------------------------------------------------------------------------
+12. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 9 ใน DocCode ด้านล่าง (Save JSON, SaveProfileService, Loadout)
+→ template/Plan/UnitySetup.md Phase 9
+→ รัน FPSGame → Setup Phase 9 (Save System)
+
+================================================================================
+PHASE 9 — ต้องรู้: Save JSON, Profile, Start Pack, Content Registry, Bootstrap
+================================================================================
+
+เป้าหมาย Phase 9
+  เมื่อจบ Phase 9 คุณต้องอธิบายได้ว่า:
+  - ทำไม template ใช้ JSON file แทน PlayerPrefs
+  - ProfileSaveData เก็บอะไร — unlock / loadout / wallet
+  - SaveProfileService โหลด/สร้าง/บันทึก profile_1…3 อย่างไร
+  - SaveStartPack กับ GameContentRegistry แยก “ค่า default” กับ “id → SO”
+  - GameplayProfileBootstrap apply loadout ไป Player ตอนเข้า gameplay
+  - string id (pistol_01) กับ ScriptableObject asset ต่างกันอย่างไร
+
+Prerequisites: Phase 1–3 (hero/weapon assets + ids), Phase 4 (PlayerWallet)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 9 แก้ — ข้อมูลผู้เล่นหายเมื่อปิดเกม
+--------------------------------------------------------------------------------
+
+Phase 1–8: loadout / wallet / unlock อยู่ใน Inspector prefab — ทุกครั้งที่ Play เหมือนเดิม
+Phase 9: บันทึกลงดิสก์ → กลับมาเล่นต่อได้, แยก 3 profile
+
+สิ่งที่ persist:
+  - ฮีโร่ / อาวุธ / ด่านที่ปลดล็อก
+  - loadout 3 slot, ฮีโรที่เลือก
+  - wallet, secret stage flag
+
+สิ่งที่ยังไม่ persist ใน Phase 9 (Phase 10+):
+  - เลือก profile ผ่าน UI menu (ใช้ F1–F3 debug ก่อน)
+  - drag/drop loadout UI (Phase 11)
+
+--------------------------------------------------------------------------------
+2. JSON + JsonUtility — ทำไมไม่ใช้ PlayerPrefs
+--------------------------------------------------------------------------------
+
+PlayerPrefs: key-value ง่าย แต่ไม่เหมาะ list ซับซ้อน (unlock หลาย id)
+Template: ไฟล์ `profile_{1..3}.json` ใต้ `Application.persistentDataPath`
+
+  string json = JsonUtility.ToJson(Data, true);
+  File.WriteAllText(path, json);
+  Data = JsonUtility.FromJson<ProfileSaveData>(json);
+
+ข้อจำกัด JsonUtility (ต้องรู้):
+  - รองรับ [Serializable] class / struct — ไม่รองรับ Dictionary
+  - array ของ string ใช้ได้ (unlockedWeaponIds)
+  - field ต้อง public หรือ [SerializeField]
+
+Path ตัวอย่าง (Windows):
+  `%USERPROFILE%\AppData\LocalLow\<Company>\<Product>\profile_1.json`
+
+JSON ไม่ commit ใน Git — สร้าง runtime; ทดสอบด้วย Play + F-keys
+
+--------------------------------------------------------------------------------
+3. ProfileSaveData — โมเดลใน JSON
+--------------------------------------------------------------------------------
+
+ไฟล์: Save/ProfileSaveData.cs
+
+  public class ProfileSaveData
+  {
+      public int saveVersion = 1;
+      public int wallet = 100;
+      public string[] unlockedHeroIds;
+      public string[] unlockedWeaponIds;
+      public string[] unlockedLevelKeys;   // เช่น "c1_l1"
+      public bool secretStageUnlocked;
+      public string selectedHeroId;
+      public string[] loadoutWeaponIds;    // 3 slot
+  }
+
+| Field | หน้าที่ |
+|-------|---------|
+| unlockedHeroIds | ฮีโรที่ปลด (hero_default) |
+| unlockedWeaponIds | อาวุธที่ปลด (pistol_01, knife_01) |
+| unlockedLevelKeys | ด่านที่เล่นได้ (CampaignKeys) |
+| selectedHeroId | ฮีโรที่เลือกตอนเข้าเกม |
+| loadoutWeaponIds[3] | weaponId ต่อ slot |
+| wallet | เงิน — sync กับ PlayerWallet |
+| secretStageUnlocked | ปลด secret stage (Phase 12) |
+
+Level keys ใช้ CampaignKeys:
+  Level(1, 1) → "c1_l1"
+  SecretStage(1) → "secret_c1"
+
+--------------------------------------------------------------------------------
+4. SaveStartPack — ค่าเริ่มต้น profile ใหม่
+--------------------------------------------------------------------------------
+
+ScriptableObject: Data/Save/StartPack_Default.asset
+
+  starterHeroIds = { hero_default }
+  starterWeaponIds = { pistol_01, knife_01 }
+  starterLevelKeys = { c1_l1 }
+  starterWallet = 100
+  defaultHeroId = hero_default
+  defaultLoadoutWeaponIds = { pistol_01, knife_01, "" }
+
+LoadOrCreate — ถ้าไม่มีไฟล์ JSON:
+  Data = startPack.CreateNewProfile() → Save() ทันที
+
+SaveProfileService.Configure(startPack) — เรียกจาก GameplayProfileBootstrap.Awake
+
+แยก Start Pack ออกจาก Service เพื่อ:
+  - designer ปรับ default ใน asset ไม่แก้โค้ด
+  - Phase 10 Profile Selection ใช้ pack เดียวกัน
+
+--------------------------------------------------------------------------------
+5. SaveProfileService — static API กลาง
+--------------------------------------------------------------------------------
+
+ไฟล์: Save/SaveProfileService.cs — static class, ไม่ใช่ MonoBehaviour
+
+สถานะหลัก:
+  CurrentProfileIndex (1–3)
+  Data (ProfileSaveData ใน memory)
+  HasActiveProfile
+
+LoadOrCreate(profileIndex):
+  1) มีไฟล์ → ReadAllText + FromJson + NormalizeData
+  2) ไม่มี → CreateDefaultProfile() + Save()
+  3) OnProfileLoaded event
+
+Save():
+  NormalizeData → ToJson(pretty) → WriteAllText
+  ถ้า !HasActiveProfile → ไม่ save
+
+Unlock API (Phase 9 core, ใช้ต่อ Phase 10–12):
+  IsHeroUnlocked / IsWeaponUnlocked / IsLevelUnlocked
+  UnlockHero / UnlockWeapon / UnlockLevel
+  UnlockNextLevelAfterWin(campaign, completedLevel)
+  UnlockSecretStage()
+  SetSelectedHero / SetLoadoutWeapon / GetLoadoutWeaponId
+
+Wallet sync:
+  ApplyWalletTo(PlayerWallet) — โหลด: Data.wallet → wallet.SetBalance
+  CaptureWalletFrom(PlayerWallet) — บันทึก: wallet.Balance → Data.wallet
+  (prototype: F5 save ค่า Data ใน memory — ถ้า wallet เปลี่ยน runtime ต้อง Capture ก่อน save)
+
+SetSaveRoot(folder) — override path สำหรับทดสอบ
+
+--------------------------------------------------------------------------------
+6. GameContentRegistry — id string → ScriptableObject
+--------------------------------------------------------------------------------
+
+JSON เก็บ string id ("pistol_01") — ไม่เก็บ reference asset
+GameContentRegistry SO แมป id → CharacterStats / WeaponData
+
+  public WeaponData GetWeapon(string weaponId)
+  public CharacterStats GetHero(string heroId)
+
+Setup Phase 9 wire:
+  heroes: Hero_Default.asset (characterId = hero_default)
+  weapons: pistol_hitscan, knife_melee
+
+Bootstrap apply:
+  GetLoadoutWeaponId(i) → registry.GetWeapon(id) → weaponHandler.SetWeaponSlot(i, data)
+
+ถ้า id ไม่มีใน registry หรือไม่ unlock → slot = null
+
+ทำไมไม่ serialize SO ใน JSON:
+  - asset path เปลี่ยนได้, build ต่าง platform
+  - id stable ข้ามเครื่อง
+
+--------------------------------------------------------------------------------
+7. GameplayProfileBootstrap — apply profile → Player
+--------------------------------------------------------------------------------
+
+Component บน GameObject "SaveSystem" ใน PrototypeGameplay
+
+Awake:
+  SaveProfileService.Configure(startPack)
+
+Start (applyOnStart = true):
+  ถ้ายังไม่มี active profile → LoadOrCreate(profileIndexOnStart) // default 1
+  ApplyToPlayer()
+
+ApplyToPlayer():
+  1) FindGameObjectWithTag("Player")
+  2) ApplyHero — selectedHeroId → registry → character.ApplyStats
+  3) ApplyWeapons — loadoutWeaponIds[0..2] → SetWeaponSlot, SetActiveSlot(0)
+  4) ApplyWallet — ApplyWalletTo(PlayerWallet) → HUD อัปเดตผ่าน OnBalanceChanged
+
+เช็ค unlock ก่อน apply — id ที่ lock จะไม่ใส่ slot
+
+SaveProfileDebug เรียก bootstrap.ApplyToPlayer() หลัง F1–F3 switch profile
+
+--------------------------------------------------------------------------------
+8. SaveProfileDebug — ทดสอบ prototype
+--------------------------------------------------------------------------------
+
+| Key | การทำงาน |
+|-----|----------|
+| F1 / F2 / F3 | LoadOrCreate(1–3) + ApplyToPlayer |
+| F5 | Save() profile ปัจจุบัน |
+| F6 | UnlockSecretStage() (ทดสอบ Phase 12) |
+
+ลบก่อน ship — Phase 10 จะใช้ ProfileSelectionController แทน
+
+--------------------------------------------------------------------------------
+9. Setup Phase 9 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 9 (Save System)
+
+สร้าง/wire:
+  Data/Save/StartPack_Default.asset
+  Data/Save/GameContentRegistry.asset (hero + weapons)
+  Scene GameObject SaveSystem:
+    GameplayProfileBootstrap (startPack, registry, profileIndexOnStart=1)
+    SaveProfileDebug (bootstrap ref)
+
+ไม่แก้ Player prefab structure — bootstrap หา Player ตอน runtime
+
+Scripts ใน vault Phase 9:
+  Save/SaveProfileService.cs, ProfileSaveData.cs, SaveStartPack.cs
+  Save/GameContentRegistry.cs, GameplayProfileBootstrap.cs
+  Save/SaveProfileDebug.cs, Save/CampaignKeys.cs
+  Editor/FPSGamePhase9Setup.cs
+
+--------------------------------------------------------------------------------
+10. Data Flow Phase 9 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [First Play]
+  SaveSystem Start
+       → LoadOrCreate(1) — ไม่มีไฟล์
+       → StartPack.CreateNewProfile()
+       → Write profile_1.json
+
+  [Apply gameplay]
+  SaveProfileService.Data
+       → GameContentRegistry lookup
+       → CharacterBase.ApplyStats (hero)
+       → WeaponHandler.SetWeaponSlot × 3
+       → PlayerWallet.SetBalance → GameplayHudManager
+
+  [Switch profile — debug]
+  F2 → LoadOrCreate(2) → ApplyToPlayer() — loadout/wallet แยกไฟล์
+
+  [Save]
+  F5 → JsonUtility.ToJson(Data) → profile_N.json
+
+  [Unlock — ใช้ Phase 10–12]
+  UI / win level → UnlockLevel("c1_l2") → Save()
+
+  id chain:
+  JSON "pistol_01" → GameContentRegistry.GetWeapon → WeaponData SO → WeaponHandler
+
+--------------------------------------------------------------------------------
+11. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 9:
+  - JsonUtility (ToJson / FromJson)
+  - Application.persistentDataPath
+  - ScriptableObject as design-time config
+  - PlayerPrefs (รู้ concept — เปรียบเทียบว่าทำไม template ไม่ใช้)
+
+Unity Learn: Saving data, ScriptableObjects
+
+--------------------------------------------------------------------------------
+12. ทดสอบว่า Phase 9 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 9 สำเร็จ — scene มี SaveSystem
+[ ] Play ครั้งแรก → สร้าง profile_1.json ใน persistentDataPath
+[ ] Wallet HUD = 100 (จาก save ไม่ใช่แค่ Inspector default)
+[ ] Weapon slot 0 pistol, slot 1 knife ตาม start pack
+[ ] F2 → profile 2 ใหม่ — wallet/loadout default แยกจาก profile 1
+[ ] F1 → กลับ profile 1 — ค่าเดิม
+[ ] F5 → เปิด JSON บนดิสก์ — อัปเดตตาม Data
+[ ] F6 → secretStageUnlocked = true ใน JSON
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 9
+
+--------------------------------------------------------------------------------
+13. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด save = ผ่าน Phase 9)
+--------------------------------------------------------------------------------
+
+1) JSON เก็บที่ path ไหน — ชื่อไฟล์ profile กี่ช่อง?
+2) ProfileSaveData กับ SaveStartPack ต่างหน้าที่อย่างไร?
+3) LoadOrCreate ทำอะไรเมื่อไม่มีไฟล์?
+4) ทำไมต้อง GameContentRegistry — JSON เก็บอะไรแทน SO?
+5) GameplayProfileBootstrap apply อะไรให้ Player 3 อย่าง?
+6) SetLoadoutWeapon(1, "knife_01") กับ Save() ทำงานร่วมกันอย่างไร?
+7) CampaignKeys.Level(2, 3) ได้ string อะไร?
+8) CaptureWalletFrom vs ApplyWalletTo — ทิศทางข้อมูล?
+
+--------------------------------------------------------------------------------
+14. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 10 ใน DocCode ด้านล่าง (Scene Flow, Profile Selection, Main Menu)
+→ template/Plan/UnitySetup.md Phase 10
+→ รัน FPSGame → Setup Phase 10 (Menu Flow)
+
+================================================================================
+PHASE 10 — ต้องรู้: Scene Flow, Build Settings, Menu Stack, Pause → Menu
+================================================================================
+
+เป้าหมาย Phase 10
+  เมื่อจบ Phase 10 คุณต้องอธิบายได้ว่า:
+  - เกมเริ่มจาก Intro ไม่ใช่ PrototypeGameplay โดยตรง
+  - Build Settings กำหนดลำดับ scene และ scene ที่ LoadScene ได้
+  - GameSceneFlow เป็นจุดเดียวเปลี่ยน scene + ForceResume pause
+  - ProfileSelection เรียก SaveProfileService ก่อนเข้า MainMenu
+  - MenuNavigator stack + global Back ทำงานอย่างไร
+  - MenuFlowState คืน Play sub-panel หลัง Pause → Back to Menu (Phase 5)
+
+Prerequisites: Phase 5 (pause UI), Phase 9 (SaveProfileService, StartPack)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 10 แก้ — ทดสอบ gameplay ตรงๆ ไม่เหมือนเกมจริง
+--------------------------------------------------------------------------------
+
+Phase 9: กด Play ที่ PrototypeGameplay + F1–F3 สลับ profile — ไม่มี flow เมนู
+Phase 10: flow ครบตั้งแต่ boot
+
+  Intro → Profile Selection → Main Menu → Play → Prototype Gameplay
+  Pause → Back to Menu → กลับ Main Menu (เปิด Play sub-panel)
+
+4 scene ใน Build Settings (ลำดับสำคัญ):
+  1. Intro.unity
+  2. ProfileSelection.unity
+  3. MainMenu.unity
+  4. PrototypeGameplay.unity
+
+Play จาก Intro (index 0) — ไม่ใช่ gameplay scene โดยตรง
+
+--------------------------------------------------------------------------------
+2. GameSceneFlow — ชื่อ scene + LoadScene กลาง
+--------------------------------------------------------------------------------
+
+ไฟล์: Core/GameSceneFlow.cs — static class
+
+Constants:
+  IntroScene = "Intro"
+  ProfileSelectionScene = "ProfileSelection"
+  MainMenuScene = "MainMenu"
+  PrototypeGameplayScene = "PrototypeGameplay"
+
+ทุก public load เรียก GameplayPauseService.ForceResume() ก่อน LoadScene
+  — กัน timeScale=0 ค้างจาก pause menu
+
+  public static void LoadMainMenu()
+  {
+      GameplayPauseService.ForceResume();
+      LoadScene(MainMenuScene);
+  }
+
+LoadScene ตรวจ CanLoadScene — ชื่อต้องอยู่ใน Build Settings
+  ไม่งั้น LogWarning ไม่ crash
+
+RestartCurrentScene — โหลด scene ปัจจุบันซ้ำ (buildIndex) — ใช้ Pause → Restart
+
+--------------------------------------------------------------------------------
+3. Intro + Profile Selection
+--------------------------------------------------------------------------------
+
+IntroSceneController (Intro.unity):
+  รอ minDisplaySeconds (unscaledTime)
+  Input.anyKeyDown หรือคลิก → LoadProfileSelection()
+
+ใช้ unscaledTime — intro ไม่ depend timeScale (pause ไม่กระทบ intro)
+
+ProfileSelectionController:
+  Awake: SaveProfileService.Configure(startPack)
+  Label: Profile N (Continue) ถ้ามี JSON / (New) ถ้ายังไม่มี
+  กด Profile 1–3:
+    SaveProfileService.LoadOrCreate(profileIndex)
+    GameSceneFlow.LoadMainMenu()
+
+แทน SaveProfileDebug F1–F3 สำหรับ flow ปกติ (debug keys ยังใช้ใน gameplay ได้)
+
+Profile ที่เลือก → CurrentProfileIndex + Data ใน memory
+  เข้า Prototype Gameplay → GameplayProfileBootstrap apply loadout (Phase 9)
+
+--------------------------------------------------------------------------------
+4. Main Menu — MenuNavigator stack
+--------------------------------------------------------------------------------
+
+MainMenu.unity: Canvas + panels หลายชั้น (SetActive สลับ)
+
+Panels:
+  MainPanel      — Play, Settings, Credits, Quit
+  PlayPanel      — Loadout (11), Campaign (12), Prototype Gameplay
+  SettingsPanel / CreditsPanel — placeholder
+  QuitConfirmPanel — Yes / Cancel
+  LoadoutPanel / CampaignPanel — wire Phase 11–12
+
+MenuNavigator — Stack<GameObject> panelHistory
+
+ResetToMainMenu():
+  clear stack, ซ่อนทุก panel, เปิด mainPanel, push stack
+
+OpenPanel(target):
+  ปิด current → เปิด target → push stack
+  แสดง global Back ถ้าไม่ใช่ mainPanel
+
+GoBack():
+  pop panel ปัจจุบัน → เปิด panel ก่อนหน้า
+  (Campaign มี sub-back — Phase 12)
+
+OnEnable (สำคัญ — restore หลัง gameplay):
+
+  if MenuFlowState.HasPendingCampaignRestore
+      ResetToMainMenuThenOpen(playPanel) → OpenPanel(campaignPanel)
+  else if MenuFlowState.ConsumePlaySubPanelRequest()
+      ResetToMainMenuThenOpen(playPanel)   ← Pause → Back to Menu
+  else
+      ResetToMainMenu()
+
+MainMenuController — wire ปุ่ม → navigator / GameSceneFlow:
+  prototypePlayButton → GameSceneFlow.LoadPrototypeGameplay()
+  confirmQuit → EditorApplication.isPlaying=false / Application.Quit()
+
+--------------------------------------------------------------------------------
+5. MenuFlowState — จำเมนูข้าม scene load
+--------------------------------------------------------------------------------
+
+Static flags — อยู่ memory ระหว่าง LoadScene (ไม่ serialize)
+
+  RequestPlaySubPanel()     — Back to Menu จาก prototype gameplay
+  RequestCampaignLevelList(campaignIndex) — จาก campaign level (Phase 12)
+
+GameplayPauseUI.ExitToMenu():
+
+  if CampaignSessionState.HasActiveCampaignContext
+      MenuFlowState.RequestCampaignLevelList(...)
+  else
+      MenuFlowState.RequestPlaySubPanel();
+  GameSceneFlow.LoadMainMenu();
+
+MainMenu โหลดใหม่ → MenuNavigator.OnEnable อ่าน flag → เปิด Play panel อัตโนมัติ
+ผู้เล่นกด Back → กลับ Main panel
+
+ทำไมไม่เก็บใน JSON:
+  เป็น UI navigation state ชั่วคราว — ไม่ใช่ progress ผู้เล่น
+
+--------------------------------------------------------------------------------
+6. เชื่อม Phase 5 + Phase 9 + Phase 10
+--------------------------------------------------------------------------------
+
+  [Boot]
+  Intro → ProfileSelection → LoadOrCreate(N) → MainMenu
+
+  [Play prototype]
+  MainMenu Play → Prototype Gameplay
+       → GameplayProfileBootstrap (Phase 9) apply hero/weapons/wallet
+
+  [Pause loop — Phase 5]
+  Escape → GameplayPauseUI → timeScale=0
+  Resume → PopPause
+  Restart → RestartCurrentScene
+  Back to Menu → MenuFlowState + LoadMainMenu
+
+  [Return menu]
+  MenuNavigator OnEnable → Play sub-panel เปิดอยู่
+
+Save ยังไม่ auto เมื่อออกเมนู — เปลี่ยน loadout ใน Phase 11 จะ Save() เอง
+
+--------------------------------------------------------------------------------
+7. Setup Phase 10 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 10 (Scene Flow)
+
+สร้าง scenes:
+  Scenes/Intro.unity
+  Scenes/ProfileSelection.unity
+  Scenes/MainMenu.unity
+
+ConfigureBuildSettings — 4 scenes ตามลำดับด้านบน
+Wire StartPack ใน ProfileSelectionController
+
+Scripts ใน vault Phase 10:
+  Core/GameSceneFlow.cs
+  UI/MenuNavigator.cs, MenuFlowState.cs
+  UI/IntroSceneController.cs, ProfileSelectionController.cs, MainMenuController.cs
+  Editor/FPSGamePhase10Setup.cs
+
+หลัง Setup: เปิด Intro.unity แล้วกด Play (ไม่ใช่ PrototypeGameplay)
+
+--------------------------------------------------------------------------------
+8. Data Flow Phase 10 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Scene transitions]
+  IntroSceneController → GameSceneFlow.LoadProfileSelection
+  ProfileSelectionController → LoadOrCreate → LoadMainMenu
+  MainMenuController → LoadPrototypeGameplay
+
+  [Profile + gameplay]
+  LoadOrCreate → SaveProfileService.Data (memory)
+  PrototypeGameplay Start → GameplayProfileBootstrap.ApplyToPlayer
+
+  [Pause → menu restore]
+  GameplayPauseUI.ExitToMenu
+       → MenuFlowState.RequestPlaySubPanel()
+       → GameSceneFlow.LoadMainMenu (ForceResume)
+       → MenuNavigator.OnEnable → PlayPanel visible
+
+  [UI navigation — same scene]
+  Button → MenuNavigator.OpenPanel → stack push
+  Global Back → GoBack → stack pop
+
+--------------------------------------------------------------------------------
+9. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 10:
+  - SceneManager.LoadScene / Build Settings
+  - UI Button onClick
+  - Canvas + Panel (SetActive)
+  - EventSystem
+
+Unity Learn: Scenes, UI basics, building a menu
+
+--------------------------------------------------------------------------------
+10. ทดสอบว่า Phase 10 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 10 สำเร็จ — Build Settings 4 scenes
+[ ] Play จาก Intro (index 0) — ไม่ใช่ PrototypeGameplay
+[ ] Intro → กดปุ่มใดก็ได้ → Profile Selection
+[ ] Profile 1 (New/Continue) → Main Menu
+[ ] Play → Prototype Gameplay → เล่นได้ + loadout จาก profile
+[ ] Pause → Back to Menu → Main Menu เปิด **Play** sub-panel
+[ ] Global Back → กลับ Main panel
+[ ] Quit confirm → หยุด Play mode (Editor)
+[ ] Profile 2 → wallet/loadout แยกจาก profile 1
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 10
+
+--------------------------------------------------------------------------------
+11. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด menu = ผ่าน Phase 10)
+--------------------------------------------------------------------------------
+
+1) Build Settings ลำดับ scene 4 อัน — อันแรกคืออะไร?
+2) GameSceneFlow ทำไม ForceResume ก่อนทุก LoadScene?
+3) Profile Selection เรียก Save API อะไรก่อนเข้า Main Menu?
+4) MenuNavigator เก็บประวัติ panel ด้วยอะไร?
+5) Pause → Back to Menu — class ไหน set flag, class ไหน consume?
+6) OpenPanel กับ GoBack ต่างกันอย่างไร?
+7) Prototype Gameplay โหลดจากปุ่มไหน — method อะไร?
+8) ทำไม MenuFlowState ไม่เก็บใน profile JSON?
+
+--------------------------------------------------------------------------------
+12. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 11 ใน DocCode ด้านล่าง (Loadout UI, drag/drop)
+→ template/Plan/UnitySetup.md Phase 11
+→ รัน FPSGame → Setup Phase 11 (Loadout Panel)
+
+================================================================================
+PHASE 11 — ต้องรู้: Loadout UI, Drag/Drop, Auto-Save, Profile → Gameplay
+================================================================================
+
+เป้าหมาย Phase 11
+  เมื่อจบ Phase 11 คุณต้องอธิบายได้ว่า:
+  - Loadout panel แก้ loadout ใน JSON ผ่าน UI ไม่ใช่ debug keys
+  - Hero คลิกเลือก vs อาวุธลากวาง — flow ต่างกัน
+  - LoadoutDragSession เป็น payload ระหว่าง drag
+  - IBeginDragHandler / IDropHandler ทำงานร่วมกันอย่างไร
+  - AssignWeaponToSlot กัน duplicate + swap slot อย่างไร
+  - เปลี่ยน loadout ในเมนู → Prototype Gameplay ได้ weapon ตรง JSON
+
+Prerequisites: Phase 9 (Save + Registry), Phase 10 (MainMenu + LoadoutPanel shell)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 11 แก้ — loadout แก้ได้แค่ JSON / debug
+--------------------------------------------------------------------------------
+
+Phase 9–10: loadout มาจาก StartPack default หรือ F-keys
+Phase 11: UI ใน Main Menu → Play → Loadout
+
+ผู้เล่นทำได้:
+  - คลิก hero ที่ unlock แล้ว → selectedHeroId
+  - ลากอาวุธจาก list ขวา → slot 1–3 กลาง
+  - ลากจาก slot → slot อื่น (swap) หรือ Unequip pool (ล้าง slot)
+  - ทุกการเปลี่ยน → SaveProfileService.Save() → profile_N.json
+
+Phase 10 สร้าง LoadoutPanel เปล่า — Phase 11 wire UI + logic
+
+--------------------------------------------------------------------------------
+2. Layout Loadout Panel
+--------------------------------------------------------------------------------
+
+MainMenu.unity → LoadoutPanel (เปิดผ่าน MenuNavigator.OpenLoadoutPanel)
+
+| Area | Component | การใช้ |
+|------|-----------|--------|
+| Heroes (ซ้าย) | Scroll + LoadoutItemView | คลิกเลือก hero |
+| Slots 1–3 (กลาง) | LoadoutItemView + LoadoutDropTarget | แสดง/รับ drop อาวุธ |
+| Unequip pool (กลางล่าง) | LoadoutDropTarget | drop จาก slot → ล้าง |
+| Weapons (ขวา) | Scroll + LoadoutItemView | ลากอาวุธที่ unlock |
+| Labels | Text | selected hero, status |
+
+Prefab: UI/Menu/LoadoutItem.prefab — ใช้ร่วม hero row, weapon row, slot row
+
+LoadoutPanelController — orchestrator หลัก (OnEnable → RefreshAll)
+
+--------------------------------------------------------------------------------
+3. LoadoutItemView — แถว hero / weapon / equipped
+--------------------------------------------------------------------------------
+
+LoadoutItemKind: Hero, Weapon, EquippedWeapon
+
+BindHero(heroId, label, selected, onClick):
+  CanDrag = false — ใช้ IPointerClickHandler → SelectHero
+
+BindWeapon(weaponId, label):
+  CanDrag = true — ลากจาก weapon list
+
+BindEquippedWeapon(slotIndex, weaponId, label, empty):
+  CanDrag = !empty — slot ว่างลากไม่ได้
+
+EnsureDragHandle — เพิ่ม LoadoutDragHandle อัตโนมัติถ้า CanDrag
+
+Rebuild list กรอง unlock:
+  !SaveProfileService.IsHeroUnlocked → ไม่แสดง
+  !SaveProfileService.IsWeaponUnlocked → ไม่แสดง
+
+--------------------------------------------------------------------------------
+4. Drag & Drop — Unity EventSystem interfaces
+--------------------------------------------------------------------------------
+
+LoadoutDragHandle (IBeginDragHandler, IDragHandler, IEndDragHandler):
+
+  OnBeginDrag:
+    LoadoutDragSession.BeginWeapon(id) หรือ BeginEquippedWeapon(id, slot)
+    source alpha 0.55, blocksRaycasts = false
+    สร้าง dragGhost ตามเมาส์
+    ปิด GraphicRaycaster ชั่วคราว (ให้ drop ผ่าน ghost)
+
+  OnDrag: ย้าย ghost ตาม ScreenPointToLocalPointInRectangle
+
+  OnEndDrag: คืน alpha, ลบ ghost, LoadoutDragSession.Clear()
+
+LoadoutDropTarget (IDropHandler):
+
+  OnDrop → panel.HandleDrop(zone, slotIndex)
+
+LoadoutDragSession — static payload (ไม่ serialize):
+
+  Kind: Weapon | EquippedWeapon
+  ItemId: weaponId
+  SourceSlot: -1 (จาก list) หรือ slot index (จาก equipped)
+
+  IsActive → Kind != None
+
+ทำไมใช้ static session:
+  drag ghost ไม่ carry reference ไป drop target — EventSystem แยก object
+  pattern ง่ายสำหรับ prototype (Phase 11 ไม่ใช้ ScriptableObject drag payload)
+
+--------------------------------------------------------------------------------
+5. HandleDrop + AssignWeaponToSlot — logic บันทึก
+--------------------------------------------------------------------------------
+
+HandleDrop ตรวจ:
+  HasActiveProfile + LoadoutDragSession.IsActive
+  weapon unlock แล้ว
+
+WeaponSlot zone:
+  ลากจาก slot เดิมมาวาง slot เดิม → return (no-op)
+  AssignWeaponToSlot(targetSlot, weaponId, sourceSlot)
+
+UnequipPool zone:
+  ต้อง drag จาก EquippedWeapon เท่านั้น
+  ClearSlot(sourceSlot)
+
+AssignWeaponToSlot (สำคัญ):
+
+  1) ลบ weaponId ซ้ำจาก slot อื่น (อาวุธเดียวกันได้ slot เดียว)
+  2) SetLoadoutWeapon(targetSlot, weaponId, saveImmediately: false)
+  3) ถ้า drag จาก slot อื่น → swap displaced weapon กลับ source slot
+  4) SaveProfileService.Save() ครั้งเดียวท้าย
+
+SelectHero:
+  SetSelectedHero(heroId) — default saveImmediately=true ใน Service
+
+ClearSlot:
+  SetLoadoutWeapon(slotIndex, "") → Save()
+
+ตัวอย่าง JSON หลังลาก knife ไป slot 2:
+  "loadoutWeaponIds": ["pistol_01", "", "knife_01"]
+
+--------------------------------------------------------------------------------
+6. เชื่อม Phase 9 + Phase 10 + Phase 11
+--------------------------------------------------------------------------------
+
+  [Profile จากเมนู — Phase 10]
+  ProfileSelection → LoadOrCreate(N) → HasActiveProfile = true
+
+  [Loadout — Phase 11]
+  LoadoutPanel OnEnable → อ่าน SaveProfileService.Data
+  เปลี่ยน hero/weapons → Save() → profile_N.json
+
+  [Gameplay — Phase 9 bootstrap]
+  GameplayProfileBootstrap.Start:
+    if (!HasActiveProfile) LoadOrCreate(profileIndexOnStart)  ← fallback debug
+    else ใช้ profile ที่เลือกจากเมนู (ไม่ทับด้วย profile 1)
+
+  ApplyToPlayer:
+    selectedHeroId → registry.GetHero → ApplyStats
+    loadoutWeaponIds[i] → registry.GetWeapon → SetWeaponSlot
+    wallet → ApplyWalletTo
+
+  chain:
+  Loadout UI → JSON → (Prototype Play) → Bootstrap → WeaponHandler
+
+--------------------------------------------------------------------------------
+7. Setup Phase 11 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 11 (Loadout Panel)
+(ต้องมี MainMenu จาก Phase 10)
+
+สร้าง/wire:
+  UI/Menu/LoadoutItem.prefab
+  MainMenu LoadoutPanel — heroes scroll, 3 slots, unequip, weapons scroll
+  LoadoutPanelController + drop targets
+  refs: StartPack, GameContentRegistry, loadoutItemPrefab
+
+Scripts ใน vault Phase 11:
+  UI/Loadout/LoadoutPanelController.cs
+  UI/Loadout/LoadoutItemView.cs
+  UI/Loadout/LoadoutDragHandle.cs
+  UI/Loadout/LoadoutDropTarget.cs
+  UI/Loadout/LoadoutDragSession.cs
+  Editor/FPSGamePhase11Setup.cs
+
+GameplayProfileBootstrap ไม่ reload profile ถ้า HasActiveProfile แล้ว
+
+--------------------------------------------------------------------------------
+8. Data Flow Phase 11 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Open panel]
+  MenuNavigator → LoadoutPanel SetActive
+       → LoadoutPanelController.OnEnable → RefreshAll
+
+  [Hero click]
+  LoadoutItemView.OnPointerClick
+       → SelectHero → SetSelectedHero → Save()
+       → Rebuild lists (highlight selected)
+
+  [Weapon drag]
+  LoadoutDragHandle.OnBeginDrag → LoadoutDragSession
+  LoadoutDropTarget.OnDrop → HandleDrop → AssignWeaponToSlot → Save()
+  OnEndDrag → Clear session
+
+  [Enter gameplay]
+  MainMenu Prototype Play → PrototypeGameplay
+       → GameplayProfileBootstrap.ApplyWeapons
+       → WeaponHandler slots ตรง JSON
+
+  [Multi-profile]
+  Profile 2 loadout แยกไฟล์ profile_2.json — ไม่ปน profile 1
+
+--------------------------------------------------------------------------------
+9. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 11:
+  - UI EventSystem
+  - IBeginDragHandler, IDragHandler, IEndDragHandler
+  - IDropHandler, IPointerClickHandler
+  - Scroll View + Content layout
+
+Unity Learn: UI drag and drop, creating UI
+
+--------------------------------------------------------------------------------
+10. ทดสอบว่า Phase 11 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 11 สำเร็จ
+[ ] Intro → Profile 1 → Main Menu → Play → Loadout
+[ ] คลิก hero → "Selected hero" อัปเดต + highlight สีเขียว
+[ ] ลาก Pistol/Knife ไป slot 1–3 → label slot เปลี่ยน
+[ ] ลาก slot → slot อื่น → swap ได้
+[ ] ลาก slot → Unequip → slot ว่าง
+[ ] เปิด profile_1.json — loadoutWeaponIds / selectedHeroId เปลี่ยน
+[ ] Prototype Gameplay → weapon ตรง loadout ที่ตั้ง
+[ ] Profile 2 → loadout แยกจาก Profile 1
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 11
+
+--------------------------------------------------------------------------------
+11. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด loadout = ผ่าน Phase 11)
+--------------------------------------------------------------------------------
+
+1) Hero กับ Weapon ใน UI ต่าง interaction อย่างไร?
+2) LoadoutDragSession เก็บอะไร 3 อย่าง?
+3) ทำไม OnBeginDrag ปิด blocksRaycasts บน source?
+4) AssignWeaponToSlot ทำไมลบ weaponId ซ้ำจาก slot อื่น?
+5) Unequip pool รับ drag แบบไหนเท่านั้น?
+6) Save() เรียกเมื่อไหร — ทุก SetLoadoutWeapon หรือครั้งเดียวท้าย assign?
+7) Bootstrap ทำไมไม่ LoadOrCreate(1) ถ้า HasActiveProfile แล้ว?
+8) contentRegistry ใช้ตอน refresh UI กับตอน gameplay ต่างกันอย่างไร?
+
+--------------------------------------------------------------------------------
+12. ขั้นถัดไป
+--------------------------------------------------------------------------------
+
+→ Phase 12 ใน DocCode ด้านล่าง (Campaign, Level Select, Unlock)
+→ template/Plan/UnitySetup.md Phase 12
+→ รัน FPSGame → Setup Phase 12 (Campaign Select)
+
+================================================================================
+PHASE 12 — ต้องรู้: Campaign Select, Level Unlock, Secret Stage, Menu Restore
+================================================================================
+
+เป้าหมาย Phase 12
+  เมื่อจบ Phase 12 คุณต้องอธิบายได้ว่า:
+  - Campaign UI 2 ชั้น: campaign list → level list
+  - level key (`c1_l1`, `secret_c1`) เก็บใน JSON unlock อย่างไร
+  - linear unlock ผ่าน SaveProfileService API
+  - secret stage ปลดด้วย `UnlockSecretStage` (F6 debug)
+  - Launch level → CampaignSessionState + MenuFlowState → pause กลับ level list
+  - MenuNavigator sub-back จาก level list vs global Back
+
+Prerequisites: Phase 9 (CampaignKeys, unlock API), Phase 10 (MainMenu, MenuFlowState)
+
+--------------------------------------------------------------------------------
+1. ปัญหาที่ Phase 12 แก้ — เล่น prototype ตรงๆ ไม่มี progression
+--------------------------------------------------------------------------------
+
+Phase 10–11: Prototype Gameplay จาก Play menu — ไม่มี campaign / level
+Phase 12: Play → Campaign → Campaign 1–4 → Level 1–4 (+ Secret Stage)
+
+MVP template:
+  ทุกด่านโหลด scene เดียว — PrototypeGameplay.unity
+  แยกด่านด้วย level key ใน save (progression) ไม่ใช่ scene แยก
+
+Profile ใหม่ (StartPack):
+  unlock แค่ c1_l1 — Level 2–4 ล็อกจนกว่าจะ UnlockNextLevelAfterWin
+
+Phase 10 สร้าง CampaignPanel placeholder — Phase 12 wire UI + logic
+
+--------------------------------------------------------------------------------
+2. CampaignKeys — ชื่อด่านใน JSON
+--------------------------------------------------------------------------------
+
+ไฟล์: Save/CampaignKeys.cs
+
+  CampaignCount = 4
+  LevelsPerCampaign = 4
+  Level(campaign, level)  → "c1_l1", "c2_l3", …
+  SecretStage(campaign)   → "secret_c1", "secret_c2", …
+
+เก็บใน ProfileSaveData.unlockedLevelKeys[] (string array)
+secretStageUnlocked (bool) — master flag สำหรับ secret stage ทุก campaign
+
+IsLevelUnlocked("c1_l2") → ContainsId ใน unlockedLevelKeys
+IsSecretStageAvailable(campaign) → secretStageUnlocked && IsLevelUnlocked(secret_c{n})
+
+--------------------------------------------------------------------------------
+3. Unlock rules — SaveProfileService API
+--------------------------------------------------------------------------------
+
+UnlockLevel(key) — เพิ่ม key ใน unlockedLevelKeys + Save()
+
+UnlockNextLevelAfterWin(campaign, completedLevel):
+  1) Unlock ด่านที่ชนะ (completedLevel)
+  2) Unlock ด่านถัดไปใน campaign เดียวกัน
+  3) ถ้าจบ campaign (level 4) → unlock c{n+1}_l1 campaign ถัดไป
+
+  // ตัวอย่าง: ชนะ Campaign 1 Level 1
+  UnlockNextLevelAfterWin(1, 1);
+  // → unlock c1_l1 + c1_l2
+
+UnlockSecretStage():
+  secretStageUnlocked = true
+  Unlock secret_c1 … secret_c4 (ทุก campaign)
+  Save()
+
+หมายเหตุ prototype:
+  UnlockNextLevelAfterWin มี API พร้อม — ยังไม่ wire กับ win condition ใน gameplay
+  ทดสอบ progression: เรียกจาก debug script / แก้ JSON / เพิ่ม win trigger เอง
+  Secret stage: F6 ใน gameplay (SaveProfileDebug) → UnlockSecretStage()
+
+--------------------------------------------------------------------------------
+4. CampaignPanelController — UI 2 ชั้น
+--------------------------------------------------------------------------------
+
+CampaignPanel ใน MainMenu — เปิดผ่าน MenuNavigator.OpenCampaignPanel
+
+Campaign list view:
+  ปุ่ม Campaign 1–4 → ShowLevelList(campaign)
+
+Level list view:
+  สร้างปุ่ม Level 1–4 จาก levelButtonPrefab
+  ถ้า IsSecretStageUnlocked → เพิ่มปุ่ม Secret Stage
+  unlocked → interactable + LaunchLevel / LaunchSecretStage
+  locked → label "(Locked)", สีเทา, กดไม่ได้
+
+LaunchLevel(campaign, level):
+  ตรวจ IsLevelUnlocked
+  CampaignSessionState.BeginCampaignLevel(campaign, level)
+  MenuFlowState.RequestCampaignLevelList(campaign)
+  GameSceneFlow.LoadPrototypeGameplay()
+
+LaunchSecretStage(campaign):
+  ตรวจ IsSecretStageAvailable
+  CampaignSessionState.BeginSecretStage(campaign)
+  MenuFlowState.RequestCampaignLevelList(campaign)
+  LoadPrototypeGameplay()
+
+OnEnable:
+  MenuFlowState.TryConsumeCampaignLevelList → ShowLevelList (restore)
+  else → ShowCampaignList()
+
+TryHandleSubBack (global Back จาก MenuNavigator):
+  ถ้าอยู่ level list → ShowCampaignList() แทน pop stack หลัก
+
+levelListBackButton → ShowCampaignList() เช่นกัน
+
+--------------------------------------------------------------------------------
+5. CampaignSessionState + MenuFlowState — restore หลัง pause
+--------------------------------------------------------------------------------
+
+CampaignSessionState (static — จำ context ตอนเล่น):
+
+  BeginCampaignLevel → ActiveCampaign, ActiveLevelKey, IsSecretStage=false
+  BeginSecretStage → ActiveCampaign, ActiveLevelKey=secret_c{n}
+  HasActiveCampaignContext → ActiveCampaign >= 1
+  Clear() เมื่อกลับ campaign list
+
+MenuFlowState (static — บอก MainMenu ว่าเปิด panel ไหน):
+
+  RequestCampaignLevelList(campaign) — หลัง launch level / pause → menu
+  HasPendingCampaignRestore → CampaignPanel restore level list
+
+GameplayPauseUI.ExitToMenu:
+
+  if CampaignSessionState.HasActiveCampaignContext
+      MenuFlowState.RequestCampaignLevelList(ActiveCampaign)
+  else
+      MenuFlowState.RequestPlaySubPanel()
+  LoadMainMenu()
+
+MenuNavigator.OnEnable (Phase 10 + 12):
+
+  HasPendingCampaignRestore
+      → ResetToMainMenuThenOpen(playPanel) → OpenPanel(campaignPanel)
+  CampaignPanel.OnEnable → ShowLevelList(campaign ที่ consume)
+
+ผลลัพธ์: Pause → Back to Menu → อยู่ **Campaign X level list** ไม่ใช่ Play root
+
+--------------------------------------------------------------------------------
+6. Navigation stack — global Back vs sub-back
+--------------------------------------------------------------------------------
+
+  Main Menu (root)
+       → Play panel
+            → Campaign panel
+                 → Campaign list (4 ปุ่ม)
+                 → Level list (levels + secret)  ← sub-view
+
+Global Back (MenuNavigator.GoBack):
+  ถ้า level list เปิด → CampaignPanelController.TryHandleSubBack → campaign list
+  ไม่งั้น pop panel stack (Campaign → Play → Main)
+
+levelListBackButton — "Back to Campaigns" → ShowCampaignList
+
+ShowCampaignList → CampaignSessionState.Clear() — ลืม context ชั่วคราว
+
+--------------------------------------------------------------------------------
+7. Setup Phase 12 ใน Unity
+--------------------------------------------------------------------------------
+
+เมนู: FPSGame → Setup Phase 12 (Campaign Select)
+(ต้องมี MainMenu จาก Phase 10)
+
+สร้าง/wire:
+  UI/Menu/CampaignLevelButton.prefab
+  MainMenu CampaignPanel — campaignListView, levelListView, 4 campaign buttons
+  CampaignPanelController + wire MenuNavigator.campaignPanelController
+
+Scripts ใน vault Phase 12:
+  UI/Campaign/CampaignPanelController.cs
+  UI/Campaign/CampaignSessionState.cs
+  UI/MenuFlowState.cs (Phase 10 — ใช้ campaign restore)
+  UI/MenuNavigator.cs (TryHandleSubBack)
+  Save/SaveProfileService.cs, Save/CampaignKeys.cs
+  Editor/FPSGamePhase12Setup.cs
+
+Debug: F6 ใน gameplay → UnlockSecretStage (SaveProfileDebug)
+
+--------------------------------------------------------------------------------
+8. Data Flow Phase 12 (ต้องวาดออกได้)
+--------------------------------------------------------------------------------
+
+  [Select level]
+  Campaign button → level list → LaunchLevel
+       → CampaignSessionState (campaign, level key)
+       → MenuFlowState.RequestCampaignLevelList
+       → LoadPrototypeGameplay (MVP scene เดียว)
+
+  [Gameplay]
+  Bootstrap apply loadout (Phase 9) — ไม่สน level key ใน MVP
+  (อนาคต: โหลด scene / spawn ตาม ActiveLevelKey)
+
+  [Pause → menu restore]
+  ExitToMenu → RequestCampaignLevelList(ActiveCampaign)
+       → LoadMainMenu
+       → MenuNavigator → CampaignPanel
+       → ShowLevelList(campaign)
+
+  [Unlock progression]
+  Win (อนาคต) → UnlockNextLevelAfterWin → JSON unlockedLevelKeys
+  F6 debug → secretStageUnlocked + secret_c* keys
+
+  [Read unlock]
+  RebuildLevelButtons → IsLevelUnlocked / IsSecretStageAvailable
+
+--------------------------------------------------------------------------------
+9. เรียนเพิ่มจาก Unity Learn
+--------------------------------------------------------------------------------
+
+https://learn.unity.com/
+
+แนะนำก่อน/คู่ Phase 12:
+  - UI Button interactable / onClick
+  - Scene loading (LoadScene — MVP ใช้ scene เดียว)
+  - ScriptableObject + save flags (concept จาก Phase 9)
+
+ไม่มี Unity Learn course เฉพาะ campaign select — ใช้ UI + save pattern จาก Phase 9–11
+
+--------------------------------------------------------------------------------
+10. ทดสอบว่า Phase 12 ผ่าน (ทำเองใน Unity)
+--------------------------------------------------------------------------------
+
+[ ] FPSGame → Setup Phase 12 สำเร็จ
+[ ] Profile ใหม่ → Campaign 1 → Level 1 เล่นได้, Level 2–4 ล็อก
+[ ] เลือก Level 1 → Prototype Gameplay โหลด + เล่นได้
+[ ] Pause → Back to Menu → กลับ **Campaign 1 level list** (ไม่ใช่ Play root)
+[ ] Global Back จาก level list → campaign list
+[ ] Global Back จาก campaign list → Play panel
+[ ] F6 ใน gameplay → Secret Stage โผล่ใน level list (unlocked)
+[ ] Profile แยก — unlock ไม่ปนกัน
+
+รายละเอียด: template/Plan/UnitySetup.md → Phase 12
+
+--------------------------------------------------------------------------------
+11. ตรวจว่ารู้จริง (ตอบได้โดยไม่เปิด campaign = ผ่าน Phase 12)
+--------------------------------------------------------------------------------
+
+1) CampaignKeys.Level(3, 2) ได้ string อะไร?
+2) Profile ใหม่ unlock level ไหน — จาก StartPack?
+3) UnlockNextLevelAfterWin(1, 4) ปลดอะไรบ้าง (campaign 1 จบ)?
+4) IsSecretStageAvailable ต้องผ่านเงื่อนไขอะไร 2 อย่าง?
+5) LaunchLevel เรียก class static อะไร 2 ตัวก่อน LoadPrototypeGameplay?
+6) Pause → Back to Menu จาก campaign level — MenuFlowState ใช้ flag ไหน?
+7) Global Back ตอนอยู่ level list ทำอะไร — ใคร handle?
+8) ทำไม MVP ทุก level ใช้ PrototypeGameplay scene เดียว?
+
+--------------------------------------------------------------------------------
+12. จบ DocCode Phase 0–12 — ครบวงจร template FPS
+--------------------------------------------------------------------------------
+
+Phase 0–12 ครบแล้ว — จาก Editor setup → gameplay → save → menu → loadout → campaign
+
+Flow เต็ม (overview):
+
+  Intro → Profile → Main Menu
+       → Loadout (JSON) / Campaign (level key)
+       → Prototype Gameplay
+            → Bootstrap → Player + weapons
+            → Input / AI / weapons → HitRegistry → damage → HUD
+            → Pause → Main Menu (restore panel ถูกต้อง)
+
+Persist: profile_N.json (unlock, loadout, wallet, secret flag)
+
+ต่อเกมจริง: wire UnlockNextLevelAfterWin ที่ win condition, scene แยกต่อ level
+
+================================================================================
+ภาพรวม Data Flow ทั้งเกม (จำ 1 บรรทัด)
+================================================================================
+Menu/Loadout → JSON(profile_N) → Bootstrap → CharacterBase + WeaponHandler
+→ Input/AI → HitRegistry → IDamageable → events → HUD
+
+================================================================================
+Unity Learn — ลิงก์ที่ควร bookmark
+================================================================================
+หลัก:     https://learn.unity.com/
+เริ่มต้น:  Get Started with Unity | Set up the Unity Editor
+เส้นทาง:  Unity Game Development Pathway (foundation)
+ใน vault:  template/Plan/UnitySetup.md (ขั้นตอนละเอียด)
+Design:    template/Plan/Plantext.txt

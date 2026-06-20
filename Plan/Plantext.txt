@@ -1,0 +1,385 @@
+1. ระบบ In-Game Gameplay (ฉากเล่นจริง)(Player)
+
+-Player & Animation: ตัวละครมุมมองบุคคลที่หนึ่ง (First Person) รองรับ W A S D
+
+  · Lower Body: แอนิเมชันทิศการเดินของขา 4 ทิศ (เดินหน้า, ซ้าย, ขวา, ถอยหลัง) ผ่าน Blend Tree
+
+  · Upper Body / มือ-ปืน: Animator Override Controller สลับตามชนิดอาวุธ
+
+  · Shift = วิ่ง, Spacebar = กระโดด
+
+หน้าจอ HUD
+
+-Dual-Layer HP Bar (หลอดเลือดสองชั้น):
+
+  · แถบหลัก (Primary): ลดทันทีที่โดนโจมตีตามค่าความเสียหายจริง
+
+  · แถบดีเลย์ (Delay/Step): แถบด้านหลังค่อยๆ ลดตามลงมาทีละสเต็ป (visual เท่านั้น)
+
+  · Shield / High HP zone: (อนาคต) ชั้นป้องกันแยกจาก delay bar
+
+- Weapon Slot UI: แสดงอาวุธที่ถืออยู่ (ปืนหรือ Melee) ตามสล็อต 1, 2, 3 — รายละเอียด UI (อนาคต)
+
+- wallet money แสดงจำนวนเงินที่มี
+
+- Pause button หยุดเวลาเกม (Back → Menu / Restart → โหลดฉากใหม่ / Resume → เล่นต่อ)
+
+
+
+⚙️ 2. ระบบ Core & Save System (หลังบ้าน)
+
+3 Save Profiles (JSON): แยก 3 โปรไฟล์อิสระ ข้อมูลต่อโปรไฟล์:
+
+- รายชื่อตัวละคร (Player) ที่ปลดล็อกแล้ว + startpack
+
+- รายชื่ออาวุธ/ไอเทม ที่ปลดล็อกแล้ว + startpack
+
+- ความก้าวหน้าแคมเปญ + startpack
+
+- startpack = ค่า Default เพื่อเริ่มเล่นได้
+
+- Loadout ปัจจุบัน: ตัวละครที่เลือก + อาวุธแต่ละสล็อต (อ้างอิง weaponId)
+
+
+
+🗺️ 3. ระบบ Flow ของฉาก และการเลือกด่าน (Scene & Campaign Layout)
+
+- Scene 1 (Intro): ฉากอินโทร
+
+- Scene 2 (Profile Selection): เลือกโปรไฟล์ 1–3 → โหลด JSON
+
+- Scene 3 (Main Menu): UI Manager + global Back
+
+  switch 1 menu: Play, ตั้งค่า, เครดิต, ออกจากเกม
+
+  switch 2 Play: Loadout Panel, Campaign
+
+  switch 3 Loadout: Grid 3 พื้นที่ — อาวุธ / Hero / loadout slots ต่อ Hero (3–5) drag & drop → บันทึก JSON
+
+  switch 4 Campaign list: campaign 1–4 → Level list
+
+  switch 5 Level list: level 1–4 ต่อ campaign (Pause → กลับ Menu คงตำแหน่งเมนู)
+
+
+
+- Loadout Panel: เปลี่ยนตัวละคร/อาวุธจากข้อมูลปลดล็อกใน JSON — ไม่มีซื้อขาย
+
+
+
+Campaign & Level: แคมเปญ 1–4, ด่าน 1–4 ต่อแคมเปญ, เล่นเส้นตรง (ชนะด่าน n ปลดล็อก n+1)
+
+
+
+Secret Stage: ซ่อน — เปิดถาวรใน JSON เมื่อทำเงื่อนไขพิเศษในด่าน 1 หรือ 3
+
+
+
+⚔️ 4. ลอจิกการคำนวณ Damage ของอาวุธ (Hit Registry)
+
+Melee: Box/Trigger คุมระยะ, กัน damage ซ้ำต่อศัตรู 1 ตัวต่อ 1 ครั้งโจมตี
+
+
+
+Firearm (Hitscan):
+
+- หน่วงก่อนโดน: 0.01s ฐาน + เพิ่มตามระยะ (ทุก 100m เกินฐาน +0.01s) — จำลองความเร็วกระสุน ไม่ใช้ projectile จริง
+
+- Penetration: ทะลุได้เฉพาะ Unit ตามจำนวนที่กำหนด (0 = หยุดที่เป้าหมายแรก, 1 = ทะลุได้อีก 1 Unit)
+
+- ทะลุกำแพง: (อนาคต)
+
+- Bullet hole: สร้าง decal เมื่อชนสิ่งกีดขวาง (ผนัง/สิ่งแวดล้อม)
+
+
+
+5. ระบบ AI Enemy (Unit)
+
+- เริ่มฉากไม่มี unit — มี spawn point + ScriptableObject กำหนดลำดับศัตรู
+
+- Trigger spawn เมื่อผู้เล่นเข้า collider ที่กำหนด
+
+- Class/Loadout แนว TF2 (อนาคตขยาย) — MVP ใช้ Unit + อาวุธจาก SO
+
+
+
+═══════════════════════════════════════════════════════════
+
+หัวข้อที่ 1 ระบบ Character — Player และ Unit (ยืนยันแล้ว)
+
+═══════════════════════════════════════════════════════════
+
+OOP:
+
+- CharacterBase (MonoBehaviour): HP, walkSpeed, jumpHeight, jumpLimit, turnSpeed, gravity, grounded
+
+- CharacterStats (ScriptableObject): ค่าต่อตัวละคร/ฮีโร่ — แก้ balance ไม่กระทบ class หลัก
+
+- Faction: Friendly / Enemy (MVP) — Race 12 เผ่า (อนาคต)
+
+- Animation: Lower-body 4 ทิศ (ขา) + Override Controller (มือ/ปืน)
+
+
+
+Player:
+
+- WASD, Shift sprint, Space jump, R reload (เฉพาะ ranged)
+
+- Mouse L = ยิง/โจมตี, Mouse R = aim
+
+- HUD: Delay HP bar, weapon slot 1–3, scroll เปลี่ยนอาวุธ
+
+- Pause: Resume / Restart scene / Exit → Menu
+
+
+
+Unit (AI):
+
+- Perception: Distance, FOV/Dot, Hearing (วิ่ง/ยิง)
+
+- Navigation: NavMesh
+
+- FSM: Patrol → Chase → Attack1 (ยิง) → Attack2 (สลับ melee ถ้ามีและเข้าใกล้)
+
+
+
+สรุป: Player กับ Unit ใช้ CharacterBase เดียวกัน — ต่างแค่ PlayerController vs AIController
+
+
+
+═══════════════════════════════════════════════════════════
+
+หัวข้อที่ 2 ระบบ Weapon — Gun และ Melee (ยืนยันแล้ว)
+
+═══════════════════════════════════════════════════════════
+
+OOP:
+
+- WeaponData (ScriptableObject): weaponId, damage, stats ตามประเภท
+
+- WeaponHandler (MonoBehaviour): ยิง, reload, cooldown, animation events
+
+- WeaponData → RangedWeaponData → HitscanWeaponData / ProjectileWeaponData
+
+- MeleeWeaponData (แยกจาก Ranged — ไม่มี ammo/reload/spread/penetration)
+
+
+
+ปืนประเภทที่ 1 — Hitscan (Raycast):
+
+- Logic = Raycast จากปากกระบอก (VFX tracer ถ้าต้องการ)
+
+- Spread, damage delay, fire cooldown, clip + magazine reserve
+
+- Reload 3 ช่วง (เอาแมกออก /ใส่แมก /ชักลัง) ช่วงละ ~0.2s รวม ~0.6s — ยกเลิกกลางทางได้ค้าง phase
+
+- Reload ทิ้งกระสุนในแมกปัจจุบัน แล้วใช้ reserve magazine
+
+- Penetration: Unit เท่านั้น | Bullet hole: สิ่งกีดขวาง
+
+
+
+ปืนประเภทที่ 2 — Projectile (RPG/ระเบิด):
+
+- Spawn object + physics velocity (ไม่ใช้ delay แบบ hitscan)
+
+- ไม่มี penetration (MVP)
+
+- Spread, cooldown, reload เหมือน ranged ทั่วไป
+
+
+
+ปืนประเภทที่ 3 — Melee (Hitbox):
+
+- Spawn trigger สั้น ~0.01s จากตำแหน่งอาวุธ
+
+- Cooldown = รอแอนิเมชันจบ
+
+- ไม่มี ammo / reload / spread / penetration
+
+
+
+สรุป: WeaponHandler เรียก logic ตาม WeaponData.category — Melee ถือเป็นอาวุธใน loadout slot เดียวกับปืน
+
+
+
+═══════════════════════════════════════════════════════════
+
+สรุปสถาปัตยกรรม (Architecture lock)
+
+═══════════════════════════════════════════════════════════
+
+- โค้ดเป้าหมาย: vault/template/Scripts/ → copy ไป Unity Assets/FPSGame/Scripts/
+
+- อ้างอิงแนวคิด: _DraftCodesOnly/ (ไม่ copy ECS/Plugins)
+
+- Inspector + ย้ายเครื่อง: ดู template/Plan/UnitySetup.md
+
+
+
+
+
+# [Project] 3D FPS Game Template (Unity) - Master Instructions
+
+## ส่วนที่ 1: บทบาท (Role)
+คุณคือ Senior Unity Gameplay Architect และ Technical Writer ที่เชี่ยวชาญการออกแบบสถาปัตยกรรมเกม FPS โดยยึดหลักการ Object-Oriented Programming (OOP) และการออกแบบที่อ้างอิงระบบ Class ของเกม Team Fortress 2 (TF2) เป็นหลัก
+
+## ส่วนที่ 2: บริบท (Context)
+ฉันกำลังสร้าง 3D FPS Game Template ที่มีโครงสร้างแบบเกมมาตรฐานทั่วไป (ดึง Core Concept มาจาก Team Fortress 2) โดยต้องการให้ระบบมีความยืดหยุ่น ขยายต่อได้ง่าย และมีเอกสารคู่มือแบบ Reverse Learning สำหรับมือใหม่ 
+
+โครงสร้างสถาปัตยกรรมหลักที่ระบบนี้ต้องยึดถือมีดังนี้:
+
+1. **ระบบตัวละคร (Unit System Hierarchy):**
+   - มี **UnitBase (Base Class)** เป็นตัวแม่ เก็บค่าพื้นฐาน: HP, Movement (เดิน/วิ่ง/กระโดด), Component จัดการคำสั่งโจมตี (Attack) และระบบทีม (Team System: Team Red / Team Blue / Neutral)
+   - มี **Player (Derived Class)** สืบทอดมาจาก UnitBase: เพิ่มระบบ Input จากผู้เล่น, ระบบ Inventory, และระบบการเชื่อมต่อกับ HUD UI
+   - มี **Enemy/AI (Derived Class)** สืบทอดมาจาก UnitBase: เพิ่มระบบ AI State Machine (ลาดตระเวน, ไล่ตาม, โจมตี)
+
+2. **ระบบอาวุธ (Weapon System Hierarchy):**
+   - มี **WeaponBase (Base Class)** เป็นตัวแม่ เก็บค่าพื้นฐาน: Damage, Cooldown (Fire Rate), Reload Logic, Max/Current Ammo, และระบบยิงแบบ Hitscan (Raycast) หรือ Projectile
+   - ปืนสคริปต์ย่อยอื่นๆ (เช่น Shotgun, Rifle) จะต้องสืบทอดมาจาก WeaponBase นี้
+
+3. **ระบบ Loadout & Main Menu:**
+   - มีหน้า Main Menu ที่สามารถกดเลือกปรับแต่ง Loadout (ติดตั้งอาวุธให้ตัวละคร) ก่อนส่งค่าเข้าไปในฉากเล่นเกม (Gameplay Scene)
+
+## ส่วนที่ 3: รูปแบบคำตอบ (Output Format)
+ทุกครั้งที่สร้างโค้ดหรือระบบใหม่ ต้องตอบกลับตามโครงสร้างนี้เสมอ:
+1. **The Code (C# Script):** โค้ดที่สะอาดตามหลัก OOP (เน้นการสืบทอด Inheritance และ Encapsulation)
+2. **Beginner's Glossary:** พจนานุกรมคำศัพท์ที่อธิบายคำสั่งในโค้ดนั้นๆ สำหรับมือใหม่
+3. **Script Connection:** วิธีเอาสคริปต์ไปแปะ และวิธีลากเชื่อมโยงใน Unity Inspector
+4. **Data Flow & OOP Logic:** อธิบายว่าสคริปต์ตัวแม่ (Base) กับตัวลูก (Derived) คุยกันอย่างไร และการส่งค่าข้ามคลาสทำอย่างไร
+
+## ส่วนที่ 4: วิธีคิด (Thinking Process)
+- **Inheritance Check:** ก่อนเขียนคลาสผู้เล่นหรือศัตรู ต้องเช็คว่าลอจิกไหนควรอยู่คลาสแม่ (UnitBase) เพื่อจะได้ไม่ต้องเขียนโค้ดซ้ำ
+- **Encapsulation & Data Flow:** ตัวแปรสำคัญต้องเป็น `private` หรือ `protected` และเปิดช่องทางเข้าถึงผ่าน `Property` หรือ `Public Method`
+- **Loose Coupling:** การที่ Player จะส่งค่าไปหา HUD UI หรือหน้า Loadout ต้องใช้ UnityEvent หรือ ScriptableObject เพื่อไม่ให้โค้ดผูกกันแน่นเกินไป
+
+## ส่วนที่ 5: ตัวอย่าง (Examples)
+แนวทางการเขียนโค้ดสืบทอดคลาส (Inheritance) และการคุยกันของโค้ดที่ต้องการ:
+
+```csharp
+// [คลาสแม่ของตัวละครทั้งหมด]
+public class UnitBase : MonoBehaviour 
+{
+    [SerializeField] protected float maxHealth = 100f;
+    protected float currentHealth;
+    public enum Team { Red, Blue, Neutral }
+    [SerializeField] private Team characterTeam;
+
+    public Team CharacterTeam => characterTeam; // เปิดให้อ่านทีมได้ แต่ห้ามแก้ตรงๆ
+
+    protected virtual void Start() => currentHealth = maxHealth;
+    
+    public virtual void TakeDamage(float amount) {
+        currentHealth -= amount;
+        if(currentHealth <= 0) Die();
+    }
+    protected virtual void Die() { /* ลอจิกการตายพื้นฐาน */ }
+}
+
+// [คลาสลูก: ผู้เล่น สั่งให้วิ่งและต่อท่อกับ UI]
+public class PlayerUnit : UnitBase 
+{
+    public UnityEngine.Events.UnityAction<float> OnPlayerHPChanged;
+
+    public override void TakeDamage(float amount) {
+        base.TakeDamage(amount); // ทำตามลอจิกคลาสแม่ก่อน
+        OnPlayerHPChanged?.Invoke(currentHealth); // แล้วค่อยส่งค่าไปอัปเดต HUD UI ของผู้เล่น
+    }
+}
+
+
+---
+
+ส่วนที่ 6: กฎเหล็ก (Negative Constraints)
+ห้ามเขียนโค้ดแบบ Hardcoding ทีม หรือ อาวุธ ทุกอย่างต้องใช้ Enum, Class หรือ ScriptableObject ในการระบุประเภทเพื่อความยืดหยุ่นแบบ TF2
+
+ห้ามลืมใส่ virtual ที่ฟังก์ชันคลาสแม่ หากฟังก์ชันนั้นคลาสลูก (Player/Enemy) ต้องเอาไปปรับแต่งต่อ (override)
+
+ห้ามละเลยการทำคู่มืออธิบาย 4 ส่วนในส่วนที่ 3 เด็ดขาด เพื่อรองรับระบบ Reverse Learning ของมือใหม่
+
+
+## สิ่งที่ระบบของคุณจะเป็นหลังจากนี้ (ตามโครงสร้าง TF2)
+
+เมื่อคุณเซตเทมเพลตนี้แล้ว Claude จะเข้าใจทันทีว่าเกมของคุณมีสถาปัตยกรรมที่แข็งแรงมาก เวลาคุณสั่งงานครั้งต่อไป เช่น:
+
+*   **สั่งทำระบบเลือกอาวุธในหน้าเมนู:** สั่งว่า *"ช่วยทำระบบ Loadout ScriptableObject ในหน้า Main Menu ที่จำค่าว่าเราเลือกปืนอะไร แล้วส่งค่านั้นไปให้ PlayerUnit ตอนเข้าเกม"*
+*   **สั่งทำระบบศัตรู:** สั่งว่า *"ช่วยสร้างสคริปต์ EnemyAI ที่สืบทอดมาจาก UnitBase ให้หน่อย โดยให้มันเช็คว่าถ้าเจอ UnitBase ตัวอื่นที่ไม่ใช่ Team เดียวกัน ให้สั่งระบบ Attack ทำงาน"*
+
+Claude จะเขียนโค้ดแยกโครงสร้างแม่-ลูก (OOP) พร้อมทำคู่มือบอกวิธีเชื่อมสคริปต์และการไหลของข้อมูล (Data Flow) ให้อย่างละเอียดทันทีครับ!
+
+
+
+Phase 0 — เตรียม Unity (ทำครั้งเดียว) ✅ tooling พร้อม
+"ช่วย setup Unity project ตาม UnitySetup.md — Tags, Layers, folder structure, PrototypeGameplay scene"
+→ รันใน Unity: FPSGame → Setup Phase 0 | ดู template/UnityBootstrap/README.md
+
+Phase 1 — Character Foundation (เสริมของที่มี) ✅ tooling พร้อม
+"ทำหัวข้อ 1 Character — เสริม CharacterBase ให้ครบ (Die, Heal, events) + สร้าง Hero_Default.asset + Player prefab ตาม UnitySetup Phase 1"
+→ รันใน Unity: FPSGame → Setup Phase 1 | ทดสอบ K/H/Y
+
+ทำไมก่อน: ทุกระบบอื่นอ้างอิงตัวละครเป็นศูนย์กลาง
+
+Phase 2 — Player Controller ✅ tooling พร้อม
+"สร้าง PlayerController สืบจาก CharacterBase — WASD, Shift sprint, Space jump, mouse look FPS, เรียก WeaponHandler"
+→ composition กับ CharacterBase (architecture lock) | รัน FPSGame → Setup Phase 2 | WASD + mouse + LMB/RMB
+
+ทำไมต่อ: ยังไม่มี input → prototype เล่นไม่ได้
+
+Phase 3 — Weapon Runtime (เสริมของที่มี) ✅ tooling พร้อม
+"ทำหัวข้อ 2 Weapon — เสริม WeaponHandler: reload 3 phase, ammo/magazine, penetration, melee anti-double-hit, bullet hole placeholder"
+→ รัน FPSGame → Setup Phase 3 | LMB/R + slot 1-2 | TestDummy @ (5,1,0)
+
+ทำไมต่อ: ต้องมี Player ก่อนถึงจะทดสอบยิง/ฟันได้
+
+Phase 4 — HUD Gameplay ✅ tooling พร้อม
+"ทำ HUD — Dual-Layer HP bar, Weapon Slot UI (1–2–3), scroll เปลี่ยอาวุธ, wallet money"
+→ รัน FPSGame → Setup Phase 4 | HP dual layer + weapon slots + wallet
+
+ทำไมต่อ: CharacterBase มี event OnHealthChanged แล้ว แต่ยังไม่มี UI รับ
+
+Phase 5 — Pause & Gameplay Flow ✅ tooling พร้อม
+"ทำ Pause — หยุดเวลา, Resume / Restart scene / Back to Menu"
+→ รัน FPSGame → Setup Phase 5 | Escape หรือ Pause button
+
+ทำไมต่อ: ปิด loop gameplay scene ให้เล่นได้ครบวงจร
+
+Phase 6 — Damage / Hit Registry (polish) ✅
+"ทำ Hit Registry ให้ครบตามแผน — hitscan delay ตามระยะ, penetration unit-only, melee hitbox 0.01s, IDamageable interface"
+→ copy Scripts + recompile | HitRegistry + IDamageable
+
+ทำไมต่อ: logic หลักมีใน WeaponHandler แล้ว แต่ยังไม่ครบ spec ในแผน
+
+Phase 7 — AI Enemy ✅ tooling พร้อม
+"สร้าง AIController + FSM (Patrol → Chase → Attack) + Perception (distance, FOV, hearing) + NavMesh"
+→ รัน FPSGame → Setup Phase 7 | NavMesh bake + Enemy_AI
+
+ทำไมต่อ: ต้องมี Player + Weapon ก่อนถึงจะทดสอบศัตรูได้
+
+Phase 8 — Enemy Spawn System ✅ tooling พร้อม
+"ทำ Spawn System — SpawnPoint + ScriptableObject wave/sequence, trigger collider เปิด spawn"
+→ รัน FPSGame → Setup Phase 8 | เดินเข้า SpawnTrigger_01
+
+ทำไมต่อ: AI ต้องมีวิธีเข้ามาในฉาก
+
+Phase 9 — Save System (Core) ✅ tooling พร้อม
+"ทำ Save System — 3 JSON profiles, startpack default, unlock heroes/weapons/campaign, loadout ปัจจุบัน"
+→ รัน FPSGame → Setup Phase 9 | F1–F3 profiles, F5 save
+
+ทำไมต่อ: ไม่พึ่ง gameplay loop แต่ Menu/Loadout ต้องใช้
+
+Phase 10 — Scene Flow & Main Menu ✅ tooling พร้อม
+"ทำ Scene Flow — Intro → Profile Selection → Main Menu (Play/Settings/Credits/Quit) + MenuNavigator + global Back"
+→ รัน FPSGame → Setup Phase 10 | Play จาก Intro scene
+
+Phase 11 — Loadout Panel ✅ tooling พร้อม
+"ทำ Loadout Panel — Grid อาวุธ/Hero/slots drag & drop, บันทึก JSON, ส่งค่าเข้า gameplay scene"
+→ รัน FPSGame → Setup Phase 11 | Main Menu → Play → Loadout
+
+Phase 12 — Campaign & Level Select ✅ tooling พร้อม
+"ทำ Campaign list (1–4) + Level list (1–4) + linear unlock + Secret Stage flag ใน JSON"
+→ รัน FPSGame → Setup Phase 12 | Main Menu → Play → Campaign | F6 secret stage (debug)
+
+สิ่งที่ Agent ทำแทนคุณไม่ได้ (ยังต้องทำเอง)
+เปิด Unity → copy Scripts → กดเมนู FPSGame → Setup Phase X
+Play mode ทดสอบ (WASD, ยิง, NavMesh bake ฯลฯ)
+ตัดสินใจ Input System vs Legacy, Built-in vs URP
+แก้ bug ที่เจอตอนเล่นจริง — Agent ไม่เห็น Unity runtime
