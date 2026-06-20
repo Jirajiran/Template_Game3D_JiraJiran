@@ -2,7 +2,7 @@
 
 โค้ดและแผนสำหรับเกม FPS — ทำงานร่วมกับ Cursor skill **`/goal`**
 
-| โฟลเดอร์ | 用途 |
+| โฟลเดอร์ | use |
 |----------|------|
 | `Plan/Plantext.txt` | แผนระบบ (design source of truth) |
 | `Plan/UnitySetup.md` | ขั้นตอน Inspector + ย้ายเครื่อง |
