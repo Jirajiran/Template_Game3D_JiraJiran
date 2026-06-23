@@ -295,26 +295,34 @@ AI จะใช้ `AIController` แทนใน Phase 7
 สร้างและ wire:
 | Asset | Path |
 |-------|------|
-| Pistol (Hitscan) | `Data/Weapons/pistol_hitscan.asset` |
+| Pistol (Raycast Projectile) | `Data/Weapons/pistol_projectile.asset` |
+| AK (Raycast Projectile) | `Data/Weapons/ak_projectile.asset` — damage/speed เหมือน pistol |
+| Sniper (Hitscan) | `Data/Weapons/sniper_hitscan.asset` |
+| RPG (Raycast Projectile) | `Data/Weapons/rpg_raycast.asset` — gravity 9.81, โค้งลง |
+| Bullet prefab | `Prefabs/Projectiles/RaycastBullet.prefab` |
 | Knife (Melee) | `Data/Weapons/knife_melee.asset` |
-| Bullet hole placeholder | `Prefabs/Weapons/bullet_hole_placeholder.prefab` |
+| Bullet hole placeholder | `Prefabs/Weapons/bullet_hole_placeholder.prefab` (impact VFX บนกระสุน) |
 | Enemy stats | `Data/Characters/Enemy_Default.asset` |
 | Test dummy | `Prefabs/Player/TestDummy_Enemy.prefab` @ (5,1,0) |
 
-Player weapon slots: `[0]=pistol`, `[1]=knife`, `[2]=empty`
+Player weapon slots: `[0]=pistol_projectile`, `[1]=knife`, `[2]=empty`
+
+ปืน pistol: `projectileSpeed=90`, `gravity=0` — กระสุนบินหน่วง หลบได้บางระยะ (ไม่ใช่ hitscan ทันที)
+
+Legacy: ถ้ามี `pistol_hitscan.asset` เก่า — Phase 3 ลบให้อัตโนมัติ (ใช้ `pistol_projectile.asset` แทน)
 
 ### วิธีที่ 2 — มือ
 
 #### ScriptableObjects
 | Asset | Type | ค่าสำคัญ |
 |-------|------|----------|
-| `pistol_hitscan.asset` | HitscanWeaponData | clip=12, mags=3, penetration=0, reloadPhase=0.2s |
+| `pistol_projectile.asset` | ProjectileWeaponData | speed=90, gravity=0, clip=12, mags=3 |
 | `knife_melee.asset` | MeleeWeaponData | activeTime=0.01s, damage=50 |
 
 #### Prefab Player — WeaponMount
 | Field | ค่า |
 |-------|-----|
-| weaponSlots[0] | pistol_hitscan |
+| weaponSlots[0] | pistol_projectile |
 | weaponSlots[1] | knife_melee |
 | muzzle | WeaponMount transform |
 
@@ -325,9 +333,11 @@ Player weapon slots: `[0]=pistol`, `[1]=knife`, `[2]=empty`
 | Reload | 3 phase: Eject → Insert → Chamber (~0.2s/phase) |
 | Reload cancel | กด LMB ระหว่าง reload → ยกเลิก |
 | Reload dump | ทิ้งกระสุนในแมกปัจจุบันเมื่อเริ่ม reload |
-| Hitscan delay | 0.01s + 0.01s/100m เกิน reference range |
-| Penetration | units เท่านั้น; count = penetration+1 targets |
-| Bullet hole | spawn prefab เมื่อชนสิ่งกีดขวาง (ไม่ใช่ unit) |
+| Pistol (projectile) | RaycastProjectile บินต่อเฟรม, speed=90, gravity=0 — หลบได้ |
+| Bullet impact | `bullet_hole_placeholder` สปอนตอนกระสุนชน |
+| Hitscan | Sniper — Ray ทันที, penetration ได้ |
+| RPG (projectile) | RaycastProjectile, speed=80, gravity=9.81 — โค้งลง |
+| Penetration | hitscan only: units เท่านั้น; count = penetration+1 targets |
 | Melee | trigger hitbox ชั่วคราว, 1 hit/target/swing |
 
 ### Input (PlayerController)
@@ -345,7 +355,9 @@ Player weapon slots: `[0]=pistol`, `[1]=knife`, `[2]=empty`
 | `Weapons/MeleeHitbox.cs` | anti-double-hit trigger |
 | `Weapons/WeaponSlotState.cs` | runtime ammo struct |
 | `Weapons/ReloadPhase.cs` | reload enum |
-| `Editor/FPSGamePhase3Setup.cs` | สร้าง assets + test dummy |
+| `Editor/FPSGamePhase3Setup.cs` | pistol/knife assets, test dummy, ลบ legacy hitscan |
+| `Editor/FPSGameWeaponCatalogSetup.cs` | AK, Sniper, RPG assets + registry/startpack helpers |
+| `Editor/FPSGameProjectileSetup.cs` | RaycastBullet prefab + Refresh Weapon Catalog menu |
 
 ### ทดสอบ Phase 3
 - [ ] LMB ยิง pistol → TestDummy HP ลด (delay เล็กน้อย)
@@ -682,7 +694,7 @@ persistentDataPath/
 
 ### Start pack defaults
 - Heroes: `hero_default`
-- Weapons: `pistol_01`, `knife_01`
+- Weapons: `pistol_01`, `knife_01`, `ak_01`, `sniper_01`, `rpg_raycast` (unlock ใน loadout)
 - Level: `c1_l1` unlocked
 - Loadout: pistol + knife
 - Wallet: 100
@@ -849,7 +861,7 @@ Prototype Gameplay → Pause → Back to Menu → MainMenu (Play sub-panel)
 ### Campaign flow
 ```
 Play → Campaign → Campaign 1–4 → Level 1–4 (locked/unlocked)
-→ Prototype Gameplay (MVP scene สำหรับทุกด่าน)
+→ Prototype Gameplay (sandbox) หรือ **Level_cX_lY** (หลัง Setup Campaign Level Scenes)
 Pause → Back to Menu → กลับ Campaign level list เดิม
 ```
 
@@ -875,16 +887,133 @@ Pause → Back to Menu → กลับ Campaign level list เดิม
 | Key | การทำงาน |
 |-----|----------|
 | F6 | ปลด Secret Stage (`secretStageUnlocked` + keys) |
+| F7 | บังคับชนะด่าน (ทดสอบ unlock + Victory UI) |
 
 ### ทดสอบ Phase 12
 - [ ] Profile ใหม่ → Campaign 1 → Level 1 เล่นได้, Level 2–4 ล็อก
 - [ ] เลือก Level 1 → Prototype Gameplay โหลดได้
+- [ ] ฆ่าศัตรูหมด (หรือ F7) → Victory UI → Back to Campaign → **Level 2 ปลดล็อก**
 - [ ] Pause → Back to Menu → กลับ **Campaign X level list** (ไม่ใช่ Play root)
 - [ ] Global Back จาก level list → campaign list | จาก campaign list → Play
 - [ ] F6 ใน gameplay → Secret Stage โผล่ใน level list
 
 ### Portability
 - [ ] Commit `CampaignLevelButton.prefab` + อัปเดต `MainMenu.unity`
+
+---
+
+## Campaign Win — Level Complete — 2025-06-20
+
+### Prerequisites
+- Phase 5 (HUD_Canvas), Phase 8 (spawn system แนะนำ), Phase 9 (SaveSystem), Phase 12 (campaign launch)
+
+### วิธีที่ 1 — อัตโนมัติ (แนะนำ)
+
+เมนู: **FPSGame → Setup Campaign Win (Level Complete)**
+
+สร้าง/wire:
+| รายการ | Path / หน้าที่ |
+|--------|----------------|
+| Victory UI | `UI/HUD/VictoryMenu.prefab` |
+| Win controller | `CampaignLevelWinController` บน `SaveSystem` (หรือ `LevelSystem`) |
+
+### Win condition (MVP)
+| กรณี | พฤติกรรม |
+|------|----------|
+| Phase 8 spawn | รอ trigger + wave spawn จบ → ฆ่าศัตรูหมด → ชนะ |
+| Phase 7 static enemy | ฆ่าศัตรูใน scene หมด → ชนะ |
+| ไม่มีศัตรู | ไม่ชนะอัตโนมัติ (ต้องมี hostile encounter) |
+| ไม่ได้ launch จาก Campaign | ไม่ unlock (แม้ฆ่าศัตรูหมด) |
+
+### Unlock on win
+```
+CampaignSessionState (campaign, level)
+  → SaveProfileService.UnlockNextLevelAfterWin(campaign, level)
+  → unlockedLevelKeys ใน profile JSON
+```
+
+### Flow หลังชนะ
+```
+Victory UI → Back to Campaign
+  → MenuFlowState.RequestCampaignLevelList
+  → MainMenu CampaignPanel แสดง level list (ด่านถัดไปปลดแล้ว)
+```
+
+### Scripts (vault)
+| File | หน้าที่ |
+|------|---------|
+| `UI/Campaign/CampaignLevelWinController.cs` | ติดตามศัตรู + unlock |
+| `UI/GameplayVictoryUI.cs` | overlay หลังชนะ |
+| `AI/EnemySpawnPoint.cs` | `EnemySpawned` event |
+| `Editor/FPSGameCampaignWinSetup.cs` | menu setup |
+
+### Debug keys
+| Key | การทำงาน |
+|-----|----------|
+| F7 | บังคับชนะ + unlock (ต้อง launch จาก Campaign) |
+
+### ทดสอบ Campaign Win
+- [ ] Campaign 1 Level 1 → เข้า spawn zone → ฆ่าศัตรูหมด → Victory
+- [ ] Back to Campaign → Level 2 กดเล่นได้
+- [ ] F5 บันทึก → ปิดเกมเปิดใหม่ → Level 2 ยังปลดอยู่
+- [ ] F7 ทดสอบ unlock โดยไม่ต้องฆ่าศัตรู
+
+### Portability
+- [ ] Commit `VictoryMenu.prefab` + gameplay scenes ที่ wire แล้ว
+
+---
+
+## Campaign Level Scenes — scene แยกต่อด่าน — 2025-06-20
+
+### Prerequisites
+- `PrototypeGameplay.unity` พร้อมครบ (Phases 1–9, 8 spawn, Campaign Win แนะนำ)
+- Phase 10 Build Settings (menu scenes)
+
+### วิธีที่ 1 — อัตโนมัติ (แนะนำ)
+
+เมนู: **FPSGame → Setup Campaign Level Scenes**
+
+สร้าง (copy จาก PrototypeGameplay ถ้ายังไม่มี):
+| ประเภท | Path | Scene name |
+|--------|------|------------|
+| Level | `Scenes/Levels/Level_c{c}_l{l}.unity` | `Level_c1_l1` … `Level_c4_l4` |
+| Secret | `Scenes/Secret/Secret_c{c}.unity` | `Secret_c1` … `Secret_c4` |
+
+- ไม่ overwrite scene ที่มีอยู่แล้ว (แก้ layout ต่อด่านได้)
+- Sync Build Settings อัตโนมัติ (menu + prototype + ทุก level scene)
+- Wire Victory + Win controller ถ้ามี `VictoryMenu.prefab`
+
+### Scene loading
+```
+CampaignPanel → LaunchLevel(c, l)
+  → GameSceneFlow.LoadCampaignLevel(c, l)
+  → Level_c{c}_l{l}  (fallback: PrototypeGameplay + warning)
+```
+
+`PrototypeGameplay` ยังใช้สำหรับ **Play → Prototype Gameplay** (sandbox)
+
+### แก้ layout ต่อด่าน
+1. เปิด `Scenes/Levels/Level_c1_l2.unity`
+2. ปรับ spawn, geometry, wave ตามต้องการ
+3. Commit scene + `.meta`
+
+### Scripts (vault)
+| File | หน้าที่ |
+|------|---------|
+| `Save/CampaignKeys.cs` | level key + scene name/path helpers |
+| `Core/GameSceneFlow.cs` | `LoadCampaignLevel`, `LoadSecretStage`, fallback |
+| `Editor/FPSGameCampaignScenesSetup.cs` | copy scenes + build settings |
+| `Editor/FPSGameEditorBuildSettings.cs` | sync Build Settings |
+
+### ทดสอบ
+- [ ] Setup Campaign Level Scenes สำเร็จ — 16 level + 4 secret ใน Build Settings
+- [ ] Campaign 1 Level 1 → โหลด `Level_c1_l1` (ดูชื่อ scene มุม Editor ตอน Play)
+- [ ] Level 2 ใช้ scene คนละไฟล์ (`Level_c1_l2`)
+- [ ] ลบ scene ออกจาก Build Settings → fallback ไป PrototypeGameplay + warning
+
+### Portability
+- [ ] Commit `Scenes/Levels/`, `Scenes/Secret/` + `.meta` ทุกไฟล์
+- [ ] Commit `ProjectSettings/EditorBuildSettings.asset` หลัง sync
 
 ---
 

@@ -76,23 +76,7 @@ namespace FPSGame.Editor
 
         private static void EnsurePrototypeSceneInBuildSettings()
         {
-            var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(
-                EditorBuildSettings.scenes);
-
-            bool hasPrototype = false;
-            foreach (var entry in scenes)
-            {
-                if (entry.path == ScenePath)
-                {
-                    hasPrototype = true;
-                    break;
-                }
-            }
-
-            if (!hasPrototype)
-                scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
-
-            EditorBuildSettings.scenes = scenes.ToArray();
+            FPSGameEditorBuildSettings.SyncBuildSettings();
         }
 
         private static GameObject BuildPauseHierarchy()

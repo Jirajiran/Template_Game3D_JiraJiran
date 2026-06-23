@@ -1,4 +1,5 @@
 # Unity Bootstrap — Phase 0
+สร้าง Unity project + copy Scripts 
 
 ใช้เมื่อสร้าง Unity project ใหม่สำหรับ FPS Game Template
 
@@ -54,3 +55,5 @@ MyGameProject_Vault_base/template/Scripts/
 ## ขั้นถัดไป
 
 → **Phase 1** ตาม `Plan/UnitySetup.md` — Character Base + Hero_Default.asset + Player prefab
+
+หมายเหตุ: หลัง Setup Campaign Level Scenes แต่ละด่านมี scene แยก — `PrototypeGameplay` ยังเป็น sandbox

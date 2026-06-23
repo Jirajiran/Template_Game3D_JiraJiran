@@ -6,13 +6,13 @@ using UnityEngine;
 namespace FPSGame.Editor
 {
     /// <summary>
-    /// Phase 3: weapon ScriptableObjects, bullet hole placeholder, test dummy, prefab wiring.
+    /// Phase 3: weapon ScriptableObjects, raycast projectile pistol, test dummy, prefab wiring.
     /// Menu: FPSGame / Setup Phase 3 (Weapons)
     /// </summary>
     public static class FPSGamePhase3Setup
     {
         private const string Root = "Assets/FPSGame";
-        private const string PistolPath = Root + "/Data/Weapons/pistol_hitscan.asset";
+        private const string PistolPath = Root + "/Data/Weapons/pistol_projectile.asset";
         private const string KnifePath = Root + "/Data/Weapons/knife_melee.asset";
         private const string EnemyStatsPath = Root + "/Data/Characters/Enemy_Default.asset";
         private const string BulletHolePath = Root + "/Prefabs/Weapons/bullet_hole_placeholder.prefab";
@@ -26,7 +26,12 @@ namespace FPSGame.Editor
             FPSGameProjectSetup.RunPhase0SetupSilent();
 
             var bulletHole = CreateOrLoadBulletHolePrefab();
-            var pistol = CreateOrLoadPistol(bulletHole);
+            var bulletPrefab = FPSGameProjectileSetup.CreateOrLoadRaycastBulletPrefab(bulletHole);
+            var pistol = CreateOrLoadPistol(bulletPrefab, bulletHole);
+            FPSGameWeaponCatalogSetup.EnsureAk(bulletPrefab);
+            FPSGameWeaponCatalogSetup.EnsureSniper(bulletHole);
+            FPSGameWeaponCatalogSetup.EnsureRpg(bulletPrefab);
+            FPSGameWeaponCatalogSetup.RemoveLegacyPistolHitscanAsset();
             var knife = CreateOrLoadKnife();
             var enemyStats = CreateOrLoadEnemyStats();
             var testDummy = CreateOrLoadTestDummy(enemyStats);
@@ -40,38 +45,63 @@ namespace FPSGame.Editor
             EditorUtility.DisplayDialog(
                 "FPSGame Phase 3",
                 "Weapons ready.\n\n" +
-                "LMB hitscan | R reload (3 phases) | melee slot 2\n" +
-                "Test dummy placed at (5, 1, 0) for damage tests.",
+                "Pistol + AK (projectile), Sniper (hitscan), RPG, Knife (melee).\n" +
+                "Run Phase 9 to register all weapons in loadout.\n" +
+                "Legacy pistol_hitscan.asset removed if present.\n\n" +
+                "Test dummy @ (5, 1, 0).",
                 "OK");
 
             Debug.Log("[FPSGame] Phase 3 setup complete.");
         }
 
-        private static HitscanWeaponData CreateOrLoadPistol(GameObject bulletHole)
+        private static ProjectileWeaponData CreateOrLoadPistol(GameObject bulletPrefab, GameObject bulletHole)
         {
-            var existing = AssetDatabase.LoadAssetAtPath<HitscanWeaponData>(PistolPath);
-            if (existing != null)
-                return existing;
+            var existing = AssetDatabase.LoadAssetAtPath<ProjectileWeaponData>(PistolPath);
+            if (existing == null)
+            {
+                existing = ScriptableObject.CreateInstance<ProjectileWeaponData>();
+                AssetDatabase.CreateAsset(existing, PistolPath);
+            }
 
-            var asset = ScriptableObject.CreateInstance<HitscanWeaponData>();
+            ApplyPistolDefaults(existing, bulletPrefab, bulletHole);
+            EditorUtility.SetDirty(existing);
+            return existing;
+        }
+
+        private static void ApplyPistolDefaults(
+            ProjectileWeaponData asset,
+            GameObject bulletPrefab,
+            GameObject bulletHole)
+        {
             asset.weaponId = "pistol_01";
             asset.displayName = "Pistol";
-            asset.category = WeaponCategory.Hitscan;
+            asset.category = WeaponCategory.Projectile;
             asset.damage = 25f;
             asset.attackCooldown = 0.25f;
             asset.clipSize = 12;
             asset.magazineCount = 3;
             asset.spreadDegrees = 1.5f;
             asset.reloadPhaseDuration = 0.2f;
-            asset.baseHitDelay = 0.01f;
-            asset.extraDelayPer100m = 0.01f;
-            asset.referenceRangeMeters = 100f;
-            asset.maxRange = 200f;
-            asset.penetration = 0;
-            asset.bulletHolePrefab = bulletHole;
+            asset.projectilePrefab = bulletPrefab;
+            asset.projectileSpeed = 90f;
+            asset.projectileGravity = 0f;
+            asset.projectileMaxLifetime = 3f;
+            asset.explosionRadius = 0f;
 
-            AssetDatabase.CreateAsset(asset, PistolPath);
-            return asset;
+            if (bulletPrefab != null && bulletHole != null)
+            {
+                var prefabRoot = PrefabUtility.LoadPrefabContents(AssetDatabase.GetAssetPath(bulletPrefab));
+                var projectile = prefabRoot.GetComponent<RaycastProjectile>();
+                if (projectile != null)
+                {
+                    var so = new SerializedObject(projectile);
+                    so.FindProperty("impactEffectPrefab").objectReferenceValue = bulletHole;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                }
+
+                PrefabUtility.SaveAsPrefabAsset(prefabRoot, AssetDatabase.GetAssetPath(bulletPrefab));
+                PrefabUtility.UnloadPrefabContents(prefabRoot);
+            }
         }
 
         private static MeleeWeaponData CreateOrLoadKnife()
@@ -154,7 +184,7 @@ namespace FPSGame.Editor
             return prefab;
         }
 
-        private static void WirePlayerWeapons(HitscanWeaponData pistol, MeleeWeaponData knife)
+        private static void WirePlayerWeapons(ProjectileWeaponData pistol, MeleeWeaponData knife)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
             if (prefab == null)

@@ -155,7 +155,7 @@ namespace FPSGame.UI
 
             CampaignSessionState.BeginCampaignLevel(campaign, level);
             MenuFlowState.RequestCampaignLevelList(campaign);
-            GameSceneFlow.LoadPrototypeGameplay();
+            GameSceneFlow.LoadCampaignLevel(campaign, level);
         }
 
         private void LaunchSecretStage(int campaign)
@@ -165,7 +165,7 @@ namespace FPSGame.UI
 
             CampaignSessionState.BeginSecretStage(campaign);
             MenuFlowState.RequestCampaignLevelList(campaign);
-            GameSceneFlow.LoadPrototypeGameplay();
+            GameSceneFlow.LoadSecretStage(campaign);
         }
 
         private void ClearLevelButtons()

@@ -1,6 +1,7 @@
 using FPSGame.Core;
 using FPSGame.Save;
 using FPSGame.Weapons;
+using FPSGame.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -17,9 +18,6 @@ namespace FPSGame.Editor
         private const string StartPackPath = Root + "/Data/Save/StartPack_Default.asset";
         private const string RegistryPath = Root + "/Data/Save/GameContentRegistry.asset";
         private const string HeroPath = Root + "/Data/Characters/Hero_Default.asset";
-        private const string EnemyPath = Root + "/Data/Characters/Enemy_Default.asset";
-        private const string PistolPath = Root + "/Data/Weapons/pistol_hitscan.asset";
-        private const string KnifePath = Root + "/Data/Weapons/knife_melee.asset";
         private const string ScenePath = Root + "/Scenes/PrototypeGameplay.unity";
 
         [MenuItem("FPSGame/Setup Phase 9 (Save System)", false, 90)]
@@ -37,8 +35,9 @@ namespace FPSGame.Editor
             EditorUtility.DisplayDialog(
                 "FPSGame Phase 9",
                 "Save system ready.\n\n" +
-                "JSON: persistentDataPath/profile_1.json … profile_3.json\n" +
-                "Debug: F1–F3 switch profile, F5 save.",
+                "Registry: pistol, AK, sniper, knife.\n" +
+                "Loadout unlocks: all four on new profile.\n" +
+                "JSON: profile_1.json … profile_3.json",
                 "OK");
 
             Debug.Log("[FPSGame] Phase 9 setup complete.");
@@ -47,20 +46,19 @@ namespace FPSGame.Editor
         private static SaveStartPack CreateOrLoadStartPack()
         {
             var existing = AssetDatabase.LoadAssetAtPath<SaveStartPack>(StartPackPath);
-            if (existing != null)
-                return existing;
+            if (existing == null)
+            {
+                existing = ScriptableObject.CreateInstance<SaveStartPack>();
+                AssetDatabase.CreateAsset(existing, StartPackPath);
+            }
 
-            var asset = ScriptableObject.CreateInstance<SaveStartPack>();
-            AssetDatabase.CreateAsset(asset, StartPackPath);
-            return asset;
+            FPSGameWeaponCatalogSetup.ApplyStartPackDefaults(existing);
+            return existing;
         }
 
         private static GameContentRegistry CreateOrLoadRegistry()
         {
             var hero = AssetDatabase.LoadAssetAtPath<CharacterStats>(HeroPath);
-            var enemy = AssetDatabase.LoadAssetAtPath<CharacterStats>(EnemyPath);
-            var pistol = AssetDatabase.LoadAssetAtPath<HitscanWeaponData>(PistolPath);
-            var knife = AssetDatabase.LoadAssetAtPath<MeleeWeaponData>(KnifePath);
 
             var existing = AssetDatabase.LoadAssetAtPath<GameContentRegistry>(RegistryPath);
             if (existing == null)
@@ -74,17 +72,9 @@ namespace FPSGame.Editor
             heroes.arraySize = hero != null ? 1 : 0;
             if (hero != null)
                 heroes.GetArrayElementAtIndex(0).objectReferenceValue = hero;
-
-            var weapons = so.FindProperty("weapons");
-            int weaponCount = (pistol != null ? 1 : 0) + (knife != null ? 1 : 0);
-            weapons.arraySize = weaponCount;
-            int w = 0;
-            if (pistol != null)
-                weapons.GetArrayElementAtIndex(w++).objectReferenceValue = pistol;
-            if (knife != null)
-                weapons.GetArrayElementAtIndex(w).objectReferenceValue = knife;
-
             so.ApplyModifiedPropertiesWithoutUndo();
+
+            FPSGameWeaponCatalogSetup.ApplyRegistryWeapons(existing);
             return existing;
         }
 
@@ -111,6 +101,22 @@ namespace FPSGame.Editor
             var debugSo = new SerializedObject(debug);
             debugSo.FindProperty("bootstrap").objectReferenceValue = bootstrap;
             debugSo.ApplyModifiedPropertiesWithoutUndo();
+
+            var winController = go.GetComponent<CampaignLevelWinController>();
+            if (winController == null)
+                winController = go.AddComponent<CampaignLevelWinController>();
+
+            var victoryUi = Object.FindObjectOfType<GameplayVictoryUI>();
+            if (victoryUi != null)
+            {
+                var winSo = new SerializedObject(winController);
+                winSo.FindProperty("victoryUi").objectReferenceValue = victoryUi;
+                winSo.ApplyModifiedPropertiesWithoutUndo();
+
+                debugSo = new SerializedObject(debug);
+                debugSo.FindProperty("winController").objectReferenceValue = winController;
+                debugSo.ApplyModifiedPropertiesWithoutUndo();
+            }
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);

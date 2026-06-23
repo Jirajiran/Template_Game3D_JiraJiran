@@ -19,7 +19,7 @@ namespace FPSGame.Editor
         private const string PerceptionPath = Root + "/Data/AI/EnemyPerception_Default.asset";
         private const string EnemyPrefabPath = Root + "/Prefabs/Enemy/Enemy_AI.prefab";
         private const string EnemyStatsPath = Root + "/Data/Characters/Enemy_Default.asset";
-        private const string PistolPath = Root + "/Data/Weapons/pistol_hitscan.asset";
+        private const string PistolPath = Root + "/Data/Weapons/pistol_projectile.asset";
         private const string KnifePath = Root + "/Data/Weapons/knife_melee.asset";
         private const string PlayerPrefabPath = Root + "/Prefabs/Player/Player.prefab";
         private const string ScenePath = Root + "/Scenes/PrototypeGameplay.unity";
@@ -31,7 +31,7 @@ namespace FPSGame.Editor
 
             var perception = CreateOrLoadPerceptionConfig();
             var enemyStats = AssetDatabase.LoadAssetAtPath<CharacterStats>(EnemyStatsPath);
-            var pistol = AssetDatabase.LoadAssetAtPath<HitscanWeaponData>(PistolPath);
+            var pistol = AssetDatabase.LoadAssetAtPath<ProjectileWeaponData>(PistolPath);
             var knife = AssetDatabase.LoadAssetAtPath<MeleeWeaponData>(KnifePath);
 
             if (enemyStats == null || pistol == null || knife == null)
@@ -45,6 +45,7 @@ namespace FPSGame.Editor
 
             AddPlayerNoiseEmitter();
             var enemyPrefab = CreateOrLoadEnemyPrefab(enemyStats, perception, pistol, knife);
+            RewireEnemyPrefabWeapons(enemyPrefab, pistol, knife);
             SetupScene(enemyPrefab, perception);
 
             AssetDatabase.SaveAssets();
@@ -87,7 +88,7 @@ namespace FPSGame.Editor
         private static GameObject CreateOrLoadEnemyPrefab(
             CharacterStats enemyStats,
             AiPerceptionConfig perception,
-            HitscanWeaponData pistol,
+            ProjectileWeaponData pistol,
             MeleeWeaponData knife)
         {
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(EnemyPrefabPath);
@@ -143,6 +144,31 @@ namespace FPSGame.Editor
             var prefab = PrefabUtility.SaveAsPrefabAsset(enemy, EnemyPrefabPath);
             Object.DestroyImmediate(enemy);
             return prefab;
+        }
+
+        private static void RewireEnemyPrefabWeapons(
+            GameObject enemyPrefab,
+            ProjectileWeaponData pistol,
+            MeleeWeaponData knife)
+        {
+            if (enemyPrefab == null || pistol == null || knife == null)
+                return;
+
+            var path = AssetDatabase.GetAssetPath(enemyPrefab);
+            var root = PrefabUtility.LoadPrefabContents(path);
+            var weaponHandler = root.GetComponentInChildren<WeaponHandler>();
+            if (weaponHandler != null)
+            {
+                var weaponSo = new SerializedObject(weaponHandler);
+                var slots = weaponSo.FindProperty("weaponSlots");
+                slots.arraySize = 3;
+                slots.GetArrayElementAtIndex(0).objectReferenceValue = pistol;
+                slots.GetArrayElementAtIndex(1).objectReferenceValue = knife;
+                weaponSo.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            PrefabUtility.UnloadPrefabContents(root);
         }
 
         private static void SetupScene(GameObject enemyPrefab, AiPerceptionConfig perception)

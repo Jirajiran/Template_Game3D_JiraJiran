@@ -208,12 +208,30 @@ namespace FPSGame.Weapons
 
         private void FireProjectile(ProjectileWeaponData data)
         {
-            if (muzzle == null || data.projectilePrefab == null) return;
+            if (muzzle == null || data.projectilePrefab == null)
+                return;
 
             Vector3 direction = ApplySpread(muzzle.forward, data.spreadDegrees);
-            var projectile = Instantiate(data.projectilePrefab, muzzle.position, Quaternion.LookRotation(direction));
-            if (projectile.TryGetComponent<Rigidbody>(out var rb))
-                rb.velocity = direction * data.projectileSpeed;
+            var projectileGo = Instantiate(
+                data.projectilePrefab,
+                muzzle.position,
+                Quaternion.LookRotation(direction));
+
+            if (projectileGo.TryGetComponent<RaycastProjectile>(out var raycastProjectile))
+            {
+                raycastProjectile.Launch(
+                    direction,
+                    data.projectileSpeed,
+                    data.damage,
+                    owner,
+                    hitMask,
+                    data.projectileGravity,
+                    data.projectileMaxLifetime);
+            }
+            else if (projectileGo.TryGetComponent<Rigidbody>(out var rb))
+            {
+                rb.velocity = direction.normalized * data.projectileSpeed;
+            }
 
             NotifyFriendlyGunshot();
         }

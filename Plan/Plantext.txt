@@ -80,15 +80,20 @@ Melee: Box/Trigger คุมระยะ, กัน damage ซ้ำต่อศ
 
 
 
-Firearm (Hitscan):
+Firearm — สองแบบใน template (2025-06):
 
-- หน่วงก่อนโดน: 0.01s ฐาน + เพิ่มตามระยะ (ทุก 100m เกินฐาน +0.01s) — จำลองความเร็วกระสุน ไม่ใช้ projectile จริง
+Hitscan (Sniper sniper_01):
+- Raycast ทันทีจากปากกระบอก + delay เล็กน้อยตามระยะ
+- แม่น ไกล หลบยาก — penetration unit-only, bullet hole บนสิ่งกีดขวาง
 
-- Penetration: ทะลุได้เฉพาะ Unit ตามจำนวนที่กำหนด (0 = หยุดที่เป้าหมายแรก, 1 = ทะลุได้อีก 1 Unit)
+Raycast Projectile (Pistol pistol_01, AK ak_01, RPG rpg_raycast):
+- Instantiate กระสุน → บินทีละเฟรม → segment Raycast กันทะลุ
+- Pistol/AK: speed 90, gravity 0 — หลบได้บางระยะ
+- RPG: speed 80, gravity 9.81 — โค้งลง ช้ากว่า
 
-- ทะลุกำแพง: (อนาคต)
+Penetration: Hitscan เท่านั้น (Unit ตามจำนวน) | Projectile ไม่มี penetration (MVP)
 
-- Bullet hole: สร้าง decal เมื่อชนสิ่งกีดขวาง (ผนัง/สิ่งแวดล้อม)
+Bullet hole / impact: projectile ใช้ impact prefab บนกระสุน | hitscan ใช้ bullet hole บนผนัง
 
 
 
@@ -164,27 +169,29 @@ OOP:
 
 
 
-ปืนประเภทที่ 1 — Hitscan (Raycast):
+ปืนประเภทที่ 1 — Hitscan (Raycast ทันที):
 
-- Logic = Raycast จากปากกระบอก (VFX tracer ถ้าต้องการ)
+- ใช้กับ: Sniper (sniper_01) — แม่น ไกล maxRange 500m
 
-- Spread, damage delay, fire cooldown, clip + magazine reserve
+- Spread ต่ำ, damage สูง, cooldown ช้า
 
-- Reload 3 ช่วง (เอาแมกออก /ใส่แมก /ชักลัง) ช่วงละ ~0.2s รวม ~0.6s — ยกเลิกกลางทางได้ค้าง phase
-
-- Reload ทิ้งกระสุนในแมกปัจจุบัน แล้วใช้ reserve magazine
+- Delay ก่อนโดน: 0.01s ฐาน + เพิ่มตามระยะ (ทุก 100m เกินฐาน +0.01s)
 
 - Penetration: Unit เท่านั้น | Bullet hole: สิ่งกีดขวาง
 
 
 
-ปืนประเภทที่ 2 — Projectile (RPG/ระเบิด):
+ปืนประเภทที่ 2 — Raycast Projectile (กระสุนบิน หลบได้):
 
-- Spawn object + physics velocity (ไม่ใช้ delay แบบ hitscan)
+- ใช้กับ: Pistol (pistol_01), AK (ak_01), RPG (rpg_raycast)
 
-- ไม่มี penetration (MVP)
+- Scripts: RaycastProjectile.cs บน RaycastBullet.prefab — segment Raycast ต่อเฟรม
 
-- Spread, cooldown, reload เหมือน ranged ทั่วไป
+- Pistol / AK: damage 25, speed 90, gravity 0 — AK ยิงถี่กว่า (clip 30, cooldown 0.1s)
+
+- RPG: damage 45, speed 80, gravity 9.81 — โค้งลง ไม่เหมาะปืนพก
+
+- Reload / spread / clip ตาม ProjectileWeaponData SO
 
 
 
@@ -199,6 +206,20 @@ OOP:
 
 
 สรุป: WeaponHandler เรียก logic ตาม WeaponData.category — Melee ถือเป็นอาวุธใน loadout slot เดียวกับปืน
+
+อาวุธใน template (Phase 3 + 9):
+
+| weaponId     | Asset                 | ระบบ              |
+|--------------|-----------------------|-------------------|
+| pistol_01    | pistol_projectile     | RaycastProjectile |
+| ak_01        | ak_projectile         | RaycastProjectile |
+| sniper_01    | sniper_hitscan        | Hitscan           |
+| rpg_raycast  | rpg_raycast           | RaycastProjectile |
+| knife_01     | knife_melee           | Melee             |
+
+Loadout unlock (StartPack): ทั้ง 5 id — default slot: pistol + knife, slot 3 ว่าง (ลาก AK/Sniper/RPG ในเมนู)
+
+Legacy: ลบ pistol_hitscan.asset เก่าใน Unity ถ้ายังมี (Phase 3 Setup ลบให้อัตโนมัติ)
 
 
 
@@ -324,9 +345,10 @@ Phase 2 — Player Controller ✅ tooling พร้อม
 
 ทำไมต่อ: ยังไม่มี input → prototype เล่นไม่ได้
 
-Phase 3 — Weapon Runtime (เสริมของที่มี) ✅ tooling พร้อม
-"ทำหัวข้อ 2 Weapon — เสริม WeaponHandler: reload 3 phase, ammo/magazine, penetration, melee anti-double-hit, bullet hole placeholder"
-→ รัน FPSGame → Setup Phase 3 | LMB/R + slot 1-2 | TestDummy @ (5,1,0)
+Phase 3 — Weapon Runtime ✅ tooling พร้อม
+"ทำหัวข้อ 2 Weapon — pistol/AK RaycastProjectile, Sniper Hitscan, RPG, knife melee, reload 3 phase"
+→ รัน FPSGame → Setup Phase 3 (+ Phase 9 registry) | TestDummy @ (5,1,0)
+→ ลบ pistol_hitscan.asset เก่าอัตโนมัติถ้ามี
 
 ทำไมต่อ: ต้องมี Player ก่อนถึงจะทดสอบยิง/ฟันได้
 
@@ -361,7 +383,7 @@ Phase 8 — Enemy Spawn System ✅ tooling พร้อม
 ทำไมต่อ: AI ต้องมีวิธีเข้ามาในฉาก
 
 Phase 9 — Save System (Core) ✅ tooling พร้อม
-"ทำ Save System — 3 JSON profiles, startpack default, unlock heroes/weapons/campaign, loadout ปัจจุบัน"
+"ทำ Save System — 3 JSON profiles, startpack unlock pistol/knife/AK/sniper/RPG, GameContentRegistry"
 → รัน FPSGame → Setup Phase 9 | F1–F3 profiles, F5 save
 
 ทำไมต่อ: ไม่พึ่ง gameplay loop แต่ Menu/Loadout ต้องใช้
@@ -377,6 +399,15 @@ Phase 11 — Loadout Panel ✅ tooling พร้อม
 Phase 12 — Campaign & Level Select ✅ tooling พร้อม
 "ทำ Campaign list (1–4) + Level list (1–4) + linear unlock + Secret Stage flag ใน JSON"
 → รัน FPSGame → Setup Phase 12 | Main Menu → Play → Campaign | F6 secret stage (debug)
+
+Campaign Win — ชนะด่านปลดล็อกถัดไป ✅ tooling พร้อม
+"ทำ Win condition — ฆ่าศัตรูหมด → UnlockNextLevelAfterWin + Victory UI"
+→ รัน FPSGame → Setup Campaign Win (Level Complete) | ชนะ Level 1 → Level 2 ปลด | F7 debug win
+
+Campaign Level Scenes — scene แยกต่อด่าน ✅ tooling พร้อม
+"ทำ scene แยกต่อด่าน — Level_c1_l1 … Level_c4_l4 + Secret_c1 … Secret_c4"
+→ รันหลัง PrototypeGameplay พร้อมครบ → FPSGame → Setup Campaign Level Scenes
+→ Campaign launch โหลด Level_cX_lY.unity (fallback PrototypeGameplay ถ้ายังไม่ setup)
 
 สิ่งที่ Agent ทำแทนคุณไม่ได้ (ยังต้องทำเอง)
 เปิด Unity → copy Scripts → กดเมนู FPSGame → Setup Phase X

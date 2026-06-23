@@ -1,4 +1,6 @@
 using System.Collections;
+using FPSGame.Core;
+using FPSGame.UI;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -18,6 +20,8 @@ namespace FPSGame.AI
 
         public bool HasRun => hasRun;
         public bool IsSpawning => isSpawning;
+
+        public event System.Action<CharacterBase> EnemySpawned;
 
         public void BeginSpawn()
         {
@@ -79,6 +83,9 @@ namespace FPSGame.AI
 
             if (instance.TryGetComponent(out AIController controller) && points != null && points.Length > 0)
                 controller.ConfigurePatrol(points);
+
+            if (instance.TryGetComponent(out CharacterBase character))
+                EnemySpawned?.Invoke(character);
         }
 
         private Transform[] ResolvePatrolPoints()

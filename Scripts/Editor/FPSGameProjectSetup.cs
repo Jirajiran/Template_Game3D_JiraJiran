@@ -32,6 +32,7 @@ namespace FPSGame.Editor
             Root + "/Prefabs",
             Root + "/Prefabs/Player",
             Root + "/Prefabs/Weapons",
+            Root + "/Prefabs/Projectiles",
             Root + "/Scenes",
             Root + "/UI",
             Root + "/UI/HUD",

@@ -6,6 +6,7 @@ namespace FPSGame.UI
     public static class CampaignSessionState
     {
         public static int ActiveCampaign { get; private set; }
+        public static int ActiveLevel { get; private set; }
         public static string ActiveLevelKey { get; private set; }
         public static bool IsSecretStage { get; private set; }
 
@@ -14,6 +15,7 @@ namespace FPSGame.UI
         public static void BeginCampaignLevel(int campaign, int level)
         {
             ActiveCampaign = campaign;
+            ActiveLevel = level;
             ActiveLevelKey = FPSGame.Save.CampaignKeys.Level(campaign, level);
             IsSecretStage = false;
         }
@@ -21,6 +23,7 @@ namespace FPSGame.UI
         public static void BeginSecretStage(int campaign)
         {
             ActiveCampaign = campaign;
+            ActiveLevel = 0;
             ActiveLevelKey = FPSGame.Save.CampaignKeys.SecretStage(campaign);
             IsSecretStage = true;
         }
@@ -28,6 +31,7 @@ namespace FPSGame.UI
         public static void Clear()
         {
             ActiveCampaign = 0;
+            ActiveLevel = 0;
             ActiveLevelKey = string.Empty;
             IsSecretStage = false;
         }

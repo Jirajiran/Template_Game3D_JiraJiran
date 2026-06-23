@@ -31,7 +31,8 @@ namespace FPSGame.Editor
                 "FPSGame Phase 12",
                 "Campaign select ready in MainMenu.\n\n" +
                 "Play → Campaign → pick campaign → unlocked levels\n" +
-                "Debug: F6 unlocks secret stage in gameplay.",
+                "Run Setup Campaign Level Scenes for per-level scenes.\n" +
+                "Debug: F6 secret stage, F7 force win.",
                 "OK");
 
             Debug.Log("[FPSGame] Phase 12 setup complete.");

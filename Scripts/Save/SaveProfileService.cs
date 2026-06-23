@@ -220,7 +220,7 @@ namespace FPSGame.Save
             return new ProfileSaveData
             {
                 unlockedHeroIds = new[] { "hero_default" },
-                unlockedWeaponIds = new[] { "pistol_01", "knife_01" },
+                unlockedWeaponIds = new[] { "pistol_01", "knife_01", "ak_01", "sniper_01", "rpg_raycast" },
                 unlockedLevelKeys = new[] { CampaignKeys.Level(1, 1) },
                 selectedHeroId = "hero_default",
                 loadoutWeaponIds = new[] { "pistol_01", "knife_01", string.Empty }

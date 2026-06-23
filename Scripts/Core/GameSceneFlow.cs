@@ -1,4 +1,5 @@
 using UnityEngine;
+using FPSGame.Save;
 using UnityEngine.SceneManagement;
 
 namespace FPSGame.Core
@@ -46,6 +47,48 @@ namespace FPSGame.Core
         {
             GameplayPauseService.ForceResume();
             LoadScene(PrototypeGameplayScene);
+        }
+
+        public static void LoadCampaignLevel(int campaign, int level)
+        {
+            GameplayPauseService.ForceResume();
+            LoadSceneWithFallback(CampaignKeys.SceneNameForLevel(campaign, level), PrototypeGameplayScene);
+        }
+
+        public static void LoadSecretStage(int campaign)
+        {
+            GameplayPauseService.ForceResume();
+            LoadSceneWithFallback(CampaignKeys.SceneNameForSecret(campaign), PrototypeGameplayScene);
+        }
+
+        public static void LoadLevelByKey(string levelKey)
+        {
+            GameplayPauseService.ForceResume();
+
+            if (CampaignKeys.TryGetSceneNameForLevelKey(levelKey, out string sceneName))
+                LoadSceneWithFallback(sceneName, PrototypeGameplayScene);
+            else
+                LoadPrototypeGameplay();
+        }
+
+        private static void LoadSceneWithFallback(string sceneName, string fallbackSceneName)
+        {
+            if (CanLoadScene(sceneName))
+            {
+                LoadScene(sceneName);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(fallbackSceneName) && CanLoadScene(fallbackSceneName))
+            {
+                Debug.LogWarning(
+                    $"[FPSGame] Scene '{sceneName}' not in Build Settings — loading fallback '{fallbackSceneName}'. " +
+                    "Run FPSGame → Setup Campaign Level Scenes.");
+                LoadScene(fallbackSceneName);
+                return;
+            }
+
+            Debug.LogWarning($"[FPSGame] Scene '{sceneName}' is not in Build Settings.");
         }
 
         private static void LoadScene(string sceneName)

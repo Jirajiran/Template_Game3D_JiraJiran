@@ -165,15 +165,7 @@ namespace FPSGame.Editor
 
         private static void ConfigureBuildSettings()
         {
-            var scenes = new[]
-            {
-                new EditorBuildSettingsScene(IntroPath, true),
-                new EditorBuildSettingsScene(ProfilePath, true),
-                new EditorBuildSettingsScene(MainMenuPath, true),
-                new EditorBuildSettingsScene(GameplayPath, true)
-            };
-
-            EditorBuildSettings.scenes = scenes;
+            FPSGameEditorBuildSettings.SyncBuildSettings();
         }
 
         private static void EnsureEventSystem()

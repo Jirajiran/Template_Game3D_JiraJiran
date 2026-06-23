@@ -7,7 +7,7 @@ namespace FPSGame.Save
     {
         [Header("Starter unlocks")]
         public string[] starterHeroIds = { "hero_default" };
-        public string[] starterWeaponIds = { "pistol_01", "knife_01" };
+        public string[] starterWeaponIds = { "pistol_01", "knife_01", "ak_01", "sniper_01", "rpg_raycast" };
         public string[] starterLevelKeys = { "c1_l1" };
         public int starterWallet = 100;
 
